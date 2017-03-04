@@ -1,0 +1,9 @@
+{% extends 'dragonpay_soapxml/base.xml' %}
+
+{% block body %}
+<CancelTransaction xmlns="http://api.dragonpay.ph">
+    <merchantId>{{ dp_merchant_id }}</merchantId>
+    <password>{{ dp_merchant_secret }}</password>
+    <merchantTxnId>{{ txn_id }}</merchantTxnId>
+</CancelTransaction>
+{% endblock%}

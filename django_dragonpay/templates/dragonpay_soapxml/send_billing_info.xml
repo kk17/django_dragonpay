@@ -1,0 +1,19 @@
+{% extends 'dragonpay_soapxml/base.xml' %}
+
+{% block body %}
+<SendBillingInfo xmlns="http://api.dragonpay.ph">
+    <merchantId>{{ dp_merchant_id }}</merchantId>
+    <password>{{ dp_merchant_secret }}</password>
+    <merchantTxnId>{{ txn_id }}</merchantTxnId>
+    <firstName> {{ first_name }} </firstName>
+    <lastName> {{ last_name }} </lastName>
+    <address1> {{ address1 }} </address1>
+    <address2> {{ address2 }} </address2>
+    <city> {{ city }} </city>
+    <state> {{ state }} </state>
+    <country> {{ country }} </country>
+    <zipCode> {{ zip_code }} </zipCode>
+    <telNo> {{ tel_no }} </telNo>
+    <email> {{ email }} </email>
+</SendBillingInfo>
+{% endblock%}
