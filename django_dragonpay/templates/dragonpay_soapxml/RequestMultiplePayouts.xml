@@ -1,0 +1,18 @@
+{% extends 'dragonpay_soapxml/base.xml' %}
+
+{% block body %}
+<RequestMultiplePayouts xmlns="http://api.dragonpay.ph">
+    <apiKey>{{ dp_merchant_apikey }}</apiKey>
+    <payTxns>
+    {% for txn in payouts %}
+        <PayoutTransaction>
+          <merchantTxnId>{{ txn.txn_id}}</merchantTxnId>
+          <userId>{{ txn.user_id }}</userId>
+          <amount>{{ txn.amount }}</amount>
+          <currency>{{ txn.currency|default:"PHP" }}</currency>
+          <description>{{ txn.description }}</description>
+        </PayoutTransaction>
+    {% endfor %}
+    </payTxns>
+</RequestMultiplePayouts>
+{% endblock%}

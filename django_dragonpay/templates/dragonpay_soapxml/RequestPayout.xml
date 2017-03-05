@@ -3,7 +3,7 @@
 {% block body %}
 <RequestPayout xmlns="http://api.dragonpay.ph/">
   <apiKey>{{ dp_merchant_apikey }}</apiKey>
-  <merchantTxnId>{{ dp_merchant_id }}</merchantTxnId>
+  <merchantTxnId>{{ tnx_id }}</merchantTxnId>
   <userId>{{ user_id }}</userId>
   <amount>{{ amount }}</amount>
   <currency>{{ currency|default:'PHP'}}</currency>
