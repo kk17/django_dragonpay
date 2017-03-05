@@ -43,7 +43,7 @@ class DragonpayCallbackForm(forms.Form):
             forms.ValidationError("DragonPay digest doesn't match!")
 
         # Decrypt params if they are encrypted
-        if settings.DRAGONPAY_ENCRYPT_PARAMSS:
+        if settings.DRAGONPAY_ENCRYPT_PARAMS:
             for key in ['param1', 'param2']:
                 param = self.cleaned_data.get(key)
 

@@ -21,6 +21,8 @@ def get_dragonpay_digest(str_or_list):
 
 # http://stackoverflow.com/a/21928790
 class AESCipher(object):
+    '''Cipher helper class used to encrypt and decrypt data via AES CBC.'''
+
     def __init__(self):
         self.bs = 32
         self.key = sha256(settings.SECRET_KEY.encode()).digest()
