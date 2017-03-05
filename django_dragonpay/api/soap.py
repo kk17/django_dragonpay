@@ -4,33 +4,36 @@ import random
 import urllib
 import logging
 import requests
+from lxml import etree
 from datetime import datetime
-import xml.dom.minidom as xmlminidom
-try:
-    import xml.etree.cElementTree as etree
-except ImportError:
-    import xml.etree.ElementTree as etree
 
 from django.template.loader import render_to_string
 
 from django_dragonpay import settings
+from django_dragonpay.models import *
 from django_dragonpay.utils import encrypt_data
 from django_dragonpay.constants import DRAGONPAY_ERROR_CODES
 
 logger = logging.getLogger('dragonpay')
 
 HEADERS = {'Content-Type': 'text/xml'}
+# constant context containinig api keys and passwords
 CONTEXT = {
     'dp_merchant_id': settings.DRAGONPAY_MERCHANT_ID,
+    'dp_merchant_apikey': settings.DRAGONPAY_API_KEY,
     'dp_merchant_secret': settings.DRAGONPAY_MERCHANT_PASSWORD,
-    'dp_merchant_apikey': settings.DRAGONPAY_API_KEY
 }
 
 
-def _dragonpay_soap_wrapper(webmethod, context, xml_name=None, payout=False, **callback):
+def _dragonpay_soap_wrapper(
+        webmethod, context={}, xml_name=None, payout=False):
     '''Wrapper function for SOAP requests to DragonPay Payment Switch (PS)
 
-    webmethod - the DragonPay web method being called.'''
+    webmethod (string) - the DragonPay web method being called.
+    context (dict) - the context to be passed to the XML template
+    xml_name (string) - override filename for the XML template file to
+        be used, if None, then webmethod.xml will be used.
+    payout (boolean) - flag to use the DRAGONPAY_PAYOUT_URL.'''
 
     # include the configuration constants
     context.update(CONTEXT)
@@ -42,40 +45,35 @@ def _dragonpay_soap_wrapper(webmethod, context, xml_name=None, payout=False, **c
     headers = {'SOAPAction': "http://api.dragonpay.ph/%s" % webmethod}
     headers.update(HEADERS)
 
+    # check if this is a PAYOUT transaction
     if not payout:
-        print "SOAP URL"
         url = settings.DRAGONPAY_SOAP_URL
     else:
-        print "Xxxxx--x-x-x"
         url = settings.DRAGONPAY_PAYOUT_URL
 
-    logger.debug(
-        'SENDING XML REQUEST [%s]:\n%s', settings.DRAGONPAY_SOAP_URL, xml)
-
+    logger.debug('Sending XML [%s]:\n%s', url, xml)
     response = requests.post(url, data=xml, headers=headers)
 
     try:
-        resp_xml = xmlminidom.parseString(response.content)
-        resp_xml = resp_xml.toprettyxml()
-    except:
-        resp_xml = response.content
+        xmltree = etree.fromstring(response.content)
+    except etree.XMLSyntaxError:
+        # Failed to create an XML object from response.content
+        logger.error(
+            'Failed to parse reponse as a valid XML: %s', response.content)
+        return
+    else:
+        xml_pretty = etree.tostring(xmltree, pretty_print=True)
 
     if response.status_code != 200:
         logger.error(
-            'Invalid response %s:\n%s', response.status_code, resp_xml)
+            'Invalid response %s:\n%s', response.status_code, xml_pretty)
 
     else:
-        logger.debug('Success\n%s', resp_xml)
-        xmltree = etree.fromstring(response.content)
-
-        # Call the callback if it exists, else, just return the XMLtree
-        if 'success' in callback:
-            return callback['success'](xmltree)
-        else:
-            return xmltree
+        logger.debug('Success\n%s', xml_pretty)
+        return xmltree
 
 
-def _dragonpay_get_wrapper(webmethod, context, payout, **callback):
+def _dragonpay_get_wrapper(webmethod, context, payout):
     '''Dragonpay SOAP wrapper function that returns the result of
     GET WebMethods.'''
 
@@ -86,8 +84,7 @@ def _dragonpay_get_wrapper(webmethod, context, payout, **callback):
         # should have a different SOAP format than the others
         xml_name = webmethod
 
-    print "PAYOUT", payout
-    xmltree = _dragonpay_soap_wrapper(webmethod, context, xml_name, payout, **callback)
+    xmltree = _dragonpay_soap_wrapper(webmethod, context, xml_name, payout)
 
     # Parse the response XML for the WebMethod specific response
     if xmltree is not None:
@@ -122,11 +119,11 @@ def get_txn_token(amount, description, email, *params):
     logger.debug(
         'get_txn_token %s %s %s %s', email, amount, description, params)
 
-    txn_id = ''.join([random.choice(string.hexdigits) for i in range(8)])
+    txn_id = ''.join([random.choice(
+        string.hexdigits) for i in range(settings.DRAGONPAY_TXN_LENGTH)])
     context = {
-        'amount': amount, 'email': email,
-        'description': 'description', 'txn_id': txn_id
-    }
+        'txn_id': txn_id, 'amount': amount, 'email': email,
+        'description': 'description'}
 
     # include the params in the context
     for i, param in enumerate(params):
@@ -136,6 +133,8 @@ def get_txn_token(amount, description, email, *params):
             param = encrypt_data(param)
 
         context['param%s' % (i + 1)] = param
+
+    DragonpayTransaction.create_from_dict(context)
 
     logger.debug('get_txn_token payload: %s', context)
 
@@ -216,10 +215,96 @@ def get_email_instructions(refno):
             response.status_code, response.content)
 
 
-def request_payout(user_id, amount, description, currency=None):
+# PAYOUT RELATED SOAP METHODS
+def _get_payout_data(webmethod, xml_name=None):
+    '''Helper function for fetching data related to Payout.'''
+
+    xmltree = _dragonpay_soap_wrapper(
+        webmethod, xml_name=xml_name or 'GetPayoutData', payout=True)
+
+    xmltree = xmltree.find(
+        './/{http://api.dragonpay.ph/}%(webmethod)sResponse/'
+        '{http://api.dragonpay.ph/}%(webmethod)sResult' % {
+            'webmethod': webmethod}
+    )
+    data = []
+
+    # convert the xmltree to dict
+    for result in xmltree:
+        subdata = {}
+        for detail in result:
+            subdata[detail.tag[detail.tag.index('}') + 1:]] = detail.text
+
+        data.append(subdata)
+
+    return data
+
+
+def get_countries():
+    '''Fetches data for the GetCountries Payout WebMethod.'''
+    return _get_payout_data('GetCountries')
+
+
+def get_processors():
+    '''Fetches data for the GetProcessors Payout WebMethod.'''
+    return _get_payout_data('GetProcessors')
+
+
+def get_payout_txn_status():
+    return _dragonpay_get_wrapper(
+        'GetTxnStatus', xml_name='GetPayouTxnStatus', payout=True)
+
+
+def modify_payout_channel():
+    return _dragonpay_get_wrapper('ModifyPayoutChannel', payout=True)
+
+
+def register_payout_user(user_details):
+    '''Register a user for payout. The registered user can be given a payout
+    using the request_payout method using his registered user_id.
+
+    user_details (dict) - the user details of the user.
+        see payout_context_keys for the list of fields that are required.'''
+
+    payout_context_keys = {
+        'address1', 'address2', 'birthdate', 'city', 'country', 'email',
+        'first_name', 'last_name', 'middle_name', 'mobile', 'state', 'zip'}
+    # Check that the given context contains the required fields
+    if not set(user_details.keys()) == payout_context_keys:
+        logger.debug(
+            'Keys [%s] are missing from the RegisterPayoutUser context',
+            ', '.join(set(user_details.keys()) - payout_context_keys))
+
+        raise Exception('RegisterPayoutUser context invalid contents')
+
+    DragonpayPayout.create_from_dict(user_details)
+
+    return _dragonpay_get_wrapper(
+        'RegisterPayoutUser', user_details, payout=True)
+
+
+def request_multiple_payouts(payout_details):
+    '''Requests for multiple payouts. This method and API only works for
+    registered payout users.
+
+    payout_details should contain the keys:
+        txn_id, user_id, amount, currency, description'''
+
+    if not isinstance(payout_details, list):
+        raise Exception('payout_details must be a list')
+
+    DragonpayPayout.create_from_dict(payout_details)
+
+    rmp = 'RequestMultiplePayouts'
+    return _get_payout_data(rmp, rmp)
+
+
+def request_payout(txn_id, user_id, amount, description, currency=None):
+    '''Request a payout to a registered user.'''
+
     context = {
-        'user_id': user_id, 'amount': amount, 'description': description,
-        'currency': currency, }
+        'txn_id': txn_id, 'user_id': user_id, 'amount': amount,
+        'description': description, 'currency': currency}
 
     _dragonpay_soap_wrapper('RequestPayout', context)
 
@@ -227,6 +312,22 @@ def request_payout(user_id, amount, description, currency=None):
 def request_payout_ex(
         user_name, amount, description, proc_id,
         proc_detail, email, mobile, currency=None):
+    '''Request for a one-time payout.
+
+    user_name - the name of the individual that will receive the payout.
+    amount - the amount to be given as payout.
+    description - a short description for this transaction.
+    proc_id - the processor id; see list of processors via get_processors
+        method.
+    proc_detail - the processor detail.
+    email - the email of the individual that will receive the payout.
+    mobile - the mobile number of the individual.
+    currency - the currency to be used, defaults to PHP when None.
+
+    Note: Payout transaction fees are not subtracted to the amount but
+        will be shouldered by the merchant. So if we send amount=500,
+        with a processor whose fee is PhP 15, PhP 515 will be deducted
+        from our DragonPay account.'''
 
     context = {
         'user_name': user_name,
@@ -235,27 +336,9 @@ def request_payout_ex(
         'description': description,
         'processor_id': proc_id,
         'processor_detail': proc_detail,
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': datetime.now(),
         'email': email,
         'mobile': mobile,
     }
 
-    result = _dragonpay_get_wrapper('RequestPayoutEx', context, payout=True)
-
-
-def register_payout_user(context):
-    # Check that the given context contains the required fields
-    payout_context_keys = {
-        'address1', 'address2', 'birthdate', 'city', 'country', 'email',
-        'first_name', 'last_name', 'middle_name', 'mobile', 'state', 'zip'}
-
-    if not set(context.keys()) == payout_context_keys:
-        logger.debug(
-            'Keys [%s] are missing from the RegisterPayoutUser context',
-            ', '.join(set(context.keys()) - payout_context_keys))
-
-        raise Exception('RegisterPayoutUser context invalid contents')
-
-    result = _dragonpay_get_wrapper('RegisterPayoutUser', context, payout=True)
-
-    return result
+    return _dragonpay_get_wrapper('RequestPayoutEx', context, payout=True)
