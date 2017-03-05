@@ -7,6 +7,8 @@ DRAGONPAY_MERCHANT_PASSWORD = getattr(settings, 'DRAGONPAY_MERCHANT_PASSWORD')
 DRAGONPAY_API_KEY = getattr(settings, 'DRAGONPAY_API_KEY')
 DRAGONPAY_ENCRYPT_PARAMS = getattr(settings, 'DRAGONPAY_ENCRYPT_PARAMS', False)
 
+DRAGONPAY_SAVE_DATA = getattr(settings, 'DRAGONPAY_SAVE_DATA', False)
+
 if DRAGONPAY_TEST_MODE:
     DRAGONPAY_BASE_URL = 'http://test.dragonpay.ph/'
 else:
