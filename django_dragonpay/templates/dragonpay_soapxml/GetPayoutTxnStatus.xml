@@ -3,6 +3,6 @@
 {% block body %}
 <GetTxnStatus xmlns="http://api.dragonpay.ph">
     <apiKey>{{ dp_merchant_apikey }}</apiKey>
-    <merchantTxnId>{{ dp_merchant_id }}</merchantTxnId>
-<GetTxnStatus>
+    <merchantTxnId>{{ txn_id }}</merchantTxnId>
+</GetTxnStatus>
 {% endblock%}

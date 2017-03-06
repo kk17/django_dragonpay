@@ -1,4 +1,4 @@
-{% extends 'dragonpay_soapxml/base.html' %}
+{% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
 <RequestPayout xmlns="http://api.dragonpay.ph/">

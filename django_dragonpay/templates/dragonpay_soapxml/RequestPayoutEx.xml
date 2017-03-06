@@ -1,9 +1,9 @@
-{% extends 'dragonpay_soapxml/base.html' %}
+{% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
 <RequestPayoutEx xmlns="http://api.dragonpay.ph/">
    <apiKey>{{ dp_merchant_apikey }}</apiKey>
-   <merchantTxnId>{{ dp_merchant_id }}</merchantTxnId>
+   <merchantTxnId>{{ txn_id }}</merchantTxnId>
    <userName>{{ user_name }}</userName>
    <amount>{{ amount }}</amount>
    <currency>{{ currency|default:"PHP" }}</currency>
