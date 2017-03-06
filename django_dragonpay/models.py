@@ -1,9 +1,10 @@
+import logging
 from django.db import models
-from django.conf import settings
-
-from django_dragonpay.api.soap import get_txn_status
+from django_dragonpay.settings import DRAGONPAY_SAVE_DATA
 
 __all__ = ['DragonpayPayoutUser', 'DragonpayTransaction', 'DragonpayPayout']
+
+logger = logging.getLogger('dragonpay.models')
 
 
 class DragonpayPayoutUser(models.Model):
@@ -22,33 +23,64 @@ class DragonpayPayoutUser(models.Model):
 
 
 class DragonpayTransaction(models.Model):
+    STATUS_CODES = (
+        ('S', 'Success'),
+        ('F', 'Failed'),
+        ('P', 'Pending'),
+        ('U', 'Unknown'),
+        ('R', 'Refund'),
+        ('K', 'Chargeback'),
+        ('V', 'Voided'),
+        ('A', 'Authorized'),
+    )
+
     id = models.CharField(primary_key=True, max_length=40)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     currency = models.CharField(max_length=3, default='PHP')
     description = models.CharField(max_length=128)
     email = models.CharField(max_length=40)
-    param1 = models.CharField(max_length=80, null=False, blank=True)
-    param2 = models.CharField(max_length=80, null=False, blank=True)
+    param1 = models.CharField(max_length=80, null=True, blank=True)
+    param2 = models.CharField(max_length=80, null=True, blank=True)
 
+    status = models.CharField(max_length=1, choices=STATUS_CODES, default='P')
     created_at = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField()
+    modified_at = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
-        return '[%s:%s] %s' % (self.id, self.amount, self.description)
+        return '%s [%s:%s] %s' % (
+            self.get_status_display(), self.id, self.amount, self.email)
 
-    def get_status(self):
-        return get_txn_status(self.id)
+    @property
+    def is_completed(self):
+        return self.modified_at is not None
+
+    def fetch_status(self):
+        '''Query DragonPay for the status of this transaction and update the
+        database.'''
+
+        from django_dragonpay.api.soap import get_txn_status
+        from django_dragonpay.constants import DRAGONPAY_STATUS_CODES
+
+        status = get_txn_status(self.id)
+
+        if status != self.status:
+            logger.info(
+                '[%s] status updated to %s',
+                self.txn_id, DRAGONPAY_STATUS_CODES[status])
+
+            self.status = status
+            self.save(updated_fields=['status'])
 
     @classmethod
     def create_from_dict(cls, details):
         # Check if we should save to database
-        if not settings.DRAGONPAY_SAVE_DATA:
+        if not DRAGONPAY_SAVE_DATA:
             return
 
         return DragonpayTransaction.objects.create(
             id=details['txn_id'],
             amount=details['amount'],
-            currency=details.get('currency'),
+            currency=details.get('currency') or 'PHP',
             description=details['description'],
             email=details['email'],
             param1=details.get('param1'),
@@ -57,6 +89,13 @@ class DragonpayTransaction(models.Model):
 
 
 class DragonpayPayout(models.Model):
+    STATUS_CODES = (
+        ('S', 'Success'),
+        ('F', 'Failed'),
+        ('P', 'Pending'),
+        ('G', 'In progress'),
+        ('V', 'Voided'),
+    )
     txn_id = models.CharField(max_length=40)
 
     # For payout registerd user
@@ -73,45 +112,80 @@ class DragonpayPayout(models.Model):
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     description = models.CharField(max_length=128)
     currency = models.CharField(max_length=3, default='PHP')
+    status = models.CharField(max_length=1, choices=STATUS_CODES, default='P')
 
     created_at = models.DateTimeField(auto_now_add=True)    # timestamp field
-    completed_at = models.DateTimeField()
+    modified_at = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return '%s [%s] %s %s' % (
+            self.get_status_display(), self.txn_id, self.amount,
+            self.user_id or self.user_name)
+
+    @property
+    def is_completed(self):
+        # we consider the txn complete if it is success/failed/void
+        return self.status in ['S', 'F', 'V']
+
+    def fetch_status(self):
+        '''Query DragonPay for the status of this transaction and update the
+        database.'''
+
+        from django_dragonpay.api.soap import get_payout_txn_status
+        from django_dragonpay.constants import DRAGONPAY_PAYOUT_STATUS_CODES
+
+        status = get_payout_txn_status(self.txn_id)
+
+        # update the status
+        if status and status != self.status:
+            logger.info(
+                '[%s] status updated to %s',
+                self.txn_id, DRAGONPAY_PAYOUT_STATUS_CODES[status])
+
+            self.status = status
+            self.save(updated_fields=['status'])
 
     @classmethod
     def create_from_dict(cls, details):
         # Check if we should save to database
-        if not settings.DRAGONPAY_SAVE_DATA:
+        if not DRAGONPAY_SAVE_DATA:
             return
 
         payouts = []
         if isinstance(details, dict):
             # request is for a single payout
             # it may be registered, or non-registered payout user
+            logger.debug(
+                'Payout txn [%s] saved to database', details['txn_id'])
+
             return DragonpayPayout.objects.create(
                 txn_id=details['txn_id'],
                 user_id=details.get('user_id'),
                 user_name=details.get('user_name'),
                 processor_id=details.get('processor_id'),
                 processor_detail=details.get('processor_detail'),
-                timestamp=details.get('timestamp'),
                 email=details.get('email'),
                 mobile=details.get('mobile'),
                 amount=details['amount'],
                 description=details['description'],
-                currency=details.get('currency'),
+                currency=details.get('currency') or 'PHP',
                 created_at=details['timestamp'],
             )
 
         elif isinstance(details, list):
             # request is from MultiplePayout; iterate over the details
-            for detail in details:
+            for i, detail in enumerate(details):
+                logger.debug(
+                    '[%d] Payout txn [%s] saved to database',
+                    i, details['txn_id'])
+
                 payouts.append(
                     DragonpayPayout.objects.create(
                         txn_id=detail['txn_id'],
                         user_id=detail['user_id'],
                         amount=detail['amount'],
                         description=detail['description'],
-                        currency=detail.get('currency'),
+                        currency=details.get('currency') or 'PHP',
                         created_at=detail['timestamp'],
                     ))
 
