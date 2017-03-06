@@ -1,3 +1,16 @@
+# Dragonpay status codes
+# See Appendix 3 of Dragonpay API documentation
+DRAGONPAY_STATUS_CODES = {
+    'S': 'Success',
+    'F': 'Failed',
+    'P': 'Pending',
+    'U': 'Unknown',
+    'R': 'Refund',
+    'K': 'Chargeback',
+    'V': 'Voided',
+    'A': 'Authorized'
+}
+
 # Dragonpay error codes.
 # See Appendix 2 of Dragonpay API documentation
 DRAGONPAY_ERROR_CODES = {
@@ -17,17 +30,25 @@ DRAGONPAY_ERROR_CODES = {
     '202': 'Invalid Merchant Password'
 }
 
-# Dragonpay status codes
-# See Appendix 3 of Dragonpay API documentation
-DRAGONPAY_STATUS_CODES = {
+
+DRAGONPAY_PAYOUT_STATUS_CODES = {
     'S': 'Success',
-    'F': 'Failure',
+    'F': 'Failed',
     'P': 'Pending',
-    'U': 'Unknown',
-    'R': 'Refund',
-    'K': 'Chargeback',
-    'V': 'Void',
-    'A': 'Authorized'
+    'G': 'In progress',
+    'V': 'Voided',
+}
+
+DRAGONPAY_PAYOUT_ERROR_CODES = {
+    '0': 'Successfully created payout request',
+    '-1': 'Invalid credentials or apiKey',
+    '-2': '(reserved)',
+    '-3': '(reserved)',
+    '-4': 'Unable to create payout transaction (internal error)',
+    '-5': 'Invalid account no / details',
+    '-6': 'Invalid pre-dated run date',
+    '-7': 'Amount exceeds limit for payout channel',
+    '-8': 'A payout has been previously requested for the same merchant txn id'
 }
 
 # Dragonpay Paymemnt method FILTERS

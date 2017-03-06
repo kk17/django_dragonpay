@@ -1,7 +1,7 @@
 import logging
 from django import forms
-from django.conf import settings
 from django_dragonpay.utils import decrypt_data
+from django_dragonpay import settings as dp_settings
 
 logger = logging.getLogger('dragonpay.forms')
 
@@ -43,7 +43,7 @@ class DragonpayCallbackForm(forms.Form):
             forms.ValidationError("DragonPay digest doesn't match!")
 
         # Decrypt params if they are encrypted
-        if settings.DRAGONPAY_ENCRYPT_PARAMS:
+        if dp_settings.DRAGONPAY_ENCRYPT_PARAMS:
             for key in ['param1', 'param2']:
                 param = self.cleaned_data.get(key)
 

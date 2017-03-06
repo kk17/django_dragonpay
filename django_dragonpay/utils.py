@@ -1,13 +1,16 @@
 import base64
-from hashlib import sha1, sha256
-from django.conf import settings
+import random
+import string
 from Crypto import Random
 from Crypto.Cipher import AES
+from hashlib import sha1, sha256
+
+from django_dragonpay import settings
 
 
 def get_dragonpay_digest(str_or_list):
     '''The DragonPay digest is a concatination of the values passed and
-    the DRAGONPAY_MERCHANT_PASSWORD, joined by a colon(":").'''
+    the DRAGONPAY_PASSWORD, joined by a colon(":").'''
 
     if isinstance(str_or_list, list) or isinstance(str_or_list, tuple):
         # The given parameter is list or tuple, convert it to a valid
@@ -16,7 +19,7 @@ def get_dragonpay_digest(str_or_list):
 
     # Append the MERCHANT_PASSWORD to the string and return the sha1 digest
     return sha1(
-        str_or_list + ':' + settings.DRAGONPAY_MERCHANT_PASSWORD).hexdigest()
+        str_or_list + ':' + settings.DRAGONPAY_PASSWORD).hexdigest()
 
 
 # http://stackoverflow.com/a/21928790
@@ -57,3 +60,10 @@ def encrypt_data(message):
 def decrypt_data(message):
     cipher = AESCipher()
     return cipher.decrypt(message)
+
+
+def generate_txn_id():
+    '''Generates a random transaction id.'''
+
+    return ''.join([random.choice(
+        string.hexdigits) for i in range(settings.DRAGONPAY_TXN_LENGTH)])
