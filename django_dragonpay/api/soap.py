@@ -1,6 +1,4 @@
 import json
-import string
-import random
 import urllib
 import logging
 import requests
@@ -9,27 +7,29 @@ from datetime import datetime
 
 from django.template.loader import render_to_string
 
-from django_dragonpay import settings
 from django_dragonpay.models import *
-from django_dragonpay.utils import encrypt_data
-from django_dragonpay.constants import DRAGONPAY_ERROR_CODES
+from django_dragonpay.utils import encrypt_data, generate_txn_id
+from django_dragonpay import settings as dp_settings
+from django_dragonpay.constants import (
+    DRAGONPAY_STATUS_CODES, DRAGONPAY_ERROR_CODES,
+    DRAGONPAY_PAYOUT_STATUS_CODES, DRAGONPAY_PAYOUT_ERROR_CODES)
 
 logger = logging.getLogger('dragonpay')
 
 HEADERS = {'Content-Type': 'text/xml'}
 # constant context containinig api keys and passwords
 CONTEXT = {
-    'dp_merchant_id': settings.DRAGONPAY_MERCHANT_ID,
-    'dp_merchant_apikey': settings.DRAGONPAY_API_KEY,
-    'dp_merchant_secret': settings.DRAGONPAY_MERCHANT_PASSWORD,
+    'dp_merchant_id': dp_settings.DRAGONPAY_ID,
+    'dp_merchant_apikey': dp_settings.DRAGONPAY_API_KEY,
+    'dp_merchant_secret': dp_settings.DRAGONPAY_PASSWORD,
 }
 
 
 def _dragonpay_soap_wrapper(
         webmethod, context={}, xml_name=None, payout=False):
-    '''Wrapper function for SOAP requests to DragonPay Payment Switch (PS)
+    '''Helper function for SOAP requests to DragonPay Payment Switch (PS).
 
-    webmethod (string) - the DragonPay web method being called.
+    webmethod (string) - the DragonPay SOAP web method being called.
     context (dict) - the context to be passed to the XML template
     xml_name (string) - override filename for the XML template file to
         be used, if None, then webmethod.xml will be used.
@@ -47,9 +47,9 @@ def _dragonpay_soap_wrapper(
 
     # check if this is a PAYOUT transaction
     if not payout:
-        url = settings.DRAGONPAY_SOAP_URL
+        url = dp_settings.DRAGONPAY_SOAP_URL
     else:
-        url = settings.DRAGONPAY_PAYOUT_URL
+        url = dp_settings.DRAGONPAY_PAYOUT_URL
 
     logger.debug('Sending XML [%s]:\n%s', url, xml)
     response = requests.post(url, data=xml, headers=headers)
@@ -73,17 +73,11 @@ def _dragonpay_soap_wrapper(
         return xmltree
 
 
-def _dragonpay_get_wrapper(webmethod, context, payout):
-    '''Dragonpay SOAP wrapper function that returns the result of
+def _dragonpay_get_wrapper(webmethod, xml_name=None, context={}, payout=False):
+    '''Dragonpay SOAP helper function that returns the result of
     GET WebMethods.'''
 
-    xml_name = 'webmethod'
-
-    if webmethod in ['CancelTransaction', 'RegisterPayoutUser']:
-        # Some DragonPay engineer decided that the CancelTransaction
-        # should have a different SOAP format than the others
-        xml_name = webmethod
-
+    xml_name = xml_name or webmethod
     xmltree = _dragonpay_soap_wrapper(webmethod, context, xml_name, payout)
 
     # Parse the response XML for the WebMethod specific response
@@ -101,44 +95,46 @@ def get_txn_url_from_token(token):
     '''Returns the DragonPay payment URL given a token.'''
 
     path = urllib.urlencode({'tokenid': token})
-    return settings.DRAGONPAY_PAY_URL + '?' + path
+    return dp_settings.DRAGONPAY_PAY_URL + '?' + path
 
 
-def get_txn_token_url(amount, description, email, *params):
+def get_txn_token_url(amount, description, email, **params):
     '''Creates a DragonPay transaction and returns the Payment Switch URL.'''
 
-    token = get_txn_token(amount, description, email, *params)[1]
+    token = get_txn_token(amount, description, email, **params)
 
     if token:
-        return get_txn_url_from_token(token)
+        return get_txn_url_from_token(token[1])
 
 
-def get_txn_token(amount, description, email, *params):
-    '''Requests for a new DragonPay transaction and returns its token.'''
+def get_txn_token(amount, description, email, txn_id=None, **params):
+    '''Requests for a new DragonPay transaction and returns its txn_id and token.
+    If not txn_id is passed, this method will generate one.
+
+    return (tuple) - (txn_id, token)'''
 
     logger.debug(
         'get_txn_token %s %s %s %s', email, amount, description, params)
 
-    txn_id = ''.join([random.choice(
-        string.hexdigits) for i in range(settings.DRAGONPAY_TXN_LENGTH)])
+    txn_id = txn_id or generate_txn_id()
     context = {
         'txn_id': txn_id, 'amount': amount, 'email': email,
         'description': 'description'}
 
+    logger.debug('params %s', params)
     # include the params in the context
-    for i, param in enumerate(params):
-        if settings.DRAGONPAY_ENCRYPT_PARAMS:
+    for key, value in params.iteritems():
+        if dp_settings.DRAGONPAY_ENCRYPT_PARAMS:
             # Encrypt the params to obfuscate the payload
-            logger.debug('Encrypting %s', param)
-            param = encrypt_data(param)
+            logger.debug('Encrypting %s', value)
+            value = encrypt_data(value)
 
-        context['param%s' % (i + 1)] = param
+        context[key] = value
 
     DragonpayTransaction.create_from_dict(context)
 
     logger.debug('get_txn_token payload: %s', context)
-
-    token = _dragonpay_get_wrapper('GetTxnToken', context)
+    token = _dragonpay_get_wrapper('GetTxnToken', context=context)
 
     # check if the response token is an error code
     if len(token) < 4:
@@ -154,20 +150,23 @@ def get_txn_token(amount, description, email, *params):
 
 
 def get_txn_status(txn_id):
-    logger.debug('get_txn_status')
+    '''Fetches the transaction status given a transaction id.'''
 
     context = {'txn_id': txn_id}
-    txn_status = _dragonpay_get_wrapper('GetTxnStatus', context)
+    txn_status = _dragonpay_get_wrapper('GetTxnStatus', 'webmethod', context)
 
-    logger.debug('[%s] Txn Status for %s', txn_status, txn_id)
+    logger.debug(
+        '[%s] txn status %s', txn_id, DRAGONPAY_STATUS_CODES[txn_status])
+
     return txn_status
 
 
 def cancel_transaction(txn_id):
-    logger.debug('cancel_transaction')
+    '''Cancels the transaction given a transaction id. Returns True if the
+    cancellation succeeds.'''
 
     context = {'txn_id': txn_id}
-    status = _dragonpay_get_wrapper('CancelTransaction', context)
+    status = _dragonpay_get_wrapper('CancelTransaction', context=context)
 
     if status == '0':
         logger.debug('[%s] Txn cancellation success', txn_id)
@@ -178,32 +177,27 @@ def cancel_transaction(txn_id):
 
 
 def get_txn_ref_no(txn_id):
-    logger.debug('get_txn_ref_no')
+    '''Fetches the reference number of a transaction.'''
+
     context = {'txn_id': txn_id}
 
-    refno = _dragonpay_get_wrapper('GetTxnRefNo', context)
+    refno = _dragonpay_get_wrapper('GetTxnRefNo', 'webmethod', context)
     logger.debug('[%s] reference no: %s', txn_id, refno)
     return refno
 
 
 def get_available_processors(amount):
-    context = {'amount': amount, 'web_method': 'GetAvailableProcessors'}
+    context = {'amount': amount}
     context.update(CONTEXT)
 
     xml = render_to_string('dragonpay_soapxml/webmethod.xml', context=context)
-
-    def _success(response):
-        pass
-
-    def _error(response):
-        pass
 
     return _dragonpay_soap_wrapper(xml, success=_success, error=_error)
 
 
 def get_email_instructions(refno):
     response = requests.get(
-        settings.DRAGONPAY_BASE_URL + 'Bank/GetEmailInstruction.aspx',
+        dp_settings.DRAGONPAY_BASE_URL + 'Bank/GetEmailInstruction.aspx',
         params={'refno': refno, 'format': 'json'})
 
     if response.status_code == 200:
@@ -250,9 +244,19 @@ def get_processors():
     return _get_payout_data('GetProcessors')
 
 
-def get_payout_txn_status():
-    return _dragonpay_get_wrapper(
-        'GetTxnStatus', xml_name='GetPayouTxnStatus', payout=True)
+def get_payout_txn_status(txn_id):
+    '''Fetches the status of a payout transaction.'''
+    context = {'txn_id': txn_id}
+
+    txn_status = _dragonpay_get_wrapper(
+        'GetTxnStatus', xml_name='GetPayoutTxnStatus',
+        context=context, payout=True)
+
+    logger.debug(
+        '[%s] txn status %s',
+        txn_id, DRAGONPAY_PAYOUT_STATUS_CODES[txn_status])
+
+    return status
 
 
 def modify_payout_channel():
@@ -277,10 +281,8 @@ def register_payout_user(user_details):
 
         raise Exception('RegisterPayoutUser context invalid contents')
 
-    DragonpayPayout.create_from_dict(user_details)
-
     return _dragonpay_get_wrapper(
-        'RegisterPayoutUser', user_details, payout=True)
+        'RegisterPayoutUser', context=user_details, payout=True)
 
 
 def request_multiple_payouts(payout_details):
@@ -306,7 +308,18 @@ def request_payout(txn_id, user_id, amount, description, currency=None):
         'txn_id': txn_id, 'user_id': user_id, 'amount': amount,
         'description': description, 'currency': currency}
 
-    _dragonpay_soap_wrapper('RequestPayout', context)
+    response_code = _dragonpay_soap_wrapper(
+        'RequestPayout', context=context, payout=True)
+
+    if response_code == '0':
+        # save the dragonpay payout transaction to the database
+        DragonpayPayout.create_from_dict(context)
+    else:
+        logger.error(
+            '[%s] %s', response_code,
+            DRAGONPAY_PAYOUT_ERROR_CODES[response_code])
+
+    return response_code
 
 
 def request_payout_ex(
@@ -329,7 +342,9 @@ def request_payout_ex(
         with a processor whose fee is PhP 15, PhP 515 will be deducted
         from our DragonPay account.'''
 
+    txn_id = generate_txn_id()
     context = {
+        'txn_id': txn_id,
         'user_name': user_name,
         'amount': amount,
         'currency': currency,
@@ -341,4 +356,15 @@ def request_payout_ex(
         'mobile': mobile,
     }
 
-    return _dragonpay_get_wrapper('RequestPayoutEx', context, payout=True)
+    response_code = _dragonpay_get_wrapper(
+        'RequestPayoutEx', context=context, payout=True)
+
+    if response_code == '0':
+        # save the dragonpay payout transaction to the database
+        DragonpayPayout.create_from_dict(context)
+    else:
+        logger.error(
+            '[%s] %s', response_code,
+            DRAGONPAY_PAYOUT_ERROR_CODES[response_code])
+
+    return response_code, txn_id

@@ -1,5 +1,6 @@
 from django.conf import settings
 
+SECRET_KEY = getattr(settings, 'SECRET_KEY')
 # DRAGONPAY API
 DRAGONPAY_TEST_MODE = getattr(settings, 'DRAGONPAY_TEST_MODE', False)
 DRAGONPAY_ID = getattr(settings, 'DRAGONPAY_ID')
