@@ -43,6 +43,8 @@ Most methods are fairly straightforward and should be easily understood especial
 
 To create a payment transaction and generate the transaction URl, use **get_txn_token_url**::
 
+    from django_dragonpay.api.soap import get_txn_token_url
+
     def payment_creation(request):
         # do your thing here
 
@@ -54,6 +56,8 @@ To create a payment transaction and generate the transaction URl, use **get_txn_
 
 
 If you only want to get the transaction token and not get the redirect url::
+
+    from django_dragonpay.api.soap import get_txn_token
 
     def payment_creation(request):
         # do your thing here
@@ -70,6 +74,8 @@ Sending Payouts
 ~~~~~~~~~~~~~~~
 
 To send a payout, use the **request_payout_ex** method::
+
+    from django_dragonpay.api.soap import request_payout_ex
 
     def send_payout(request):
         # get the response and transaction id
