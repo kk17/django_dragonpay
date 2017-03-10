@@ -110,7 +110,7 @@ class DragonpayPayout(models.Model):
         (('UBP'), ('Union Bank')),
         (('UCPB'), ('UCPB')),
         (('PSB'), ('PS Bank')),
-        # (('CEBL'), ('Cebuana Lhuilier')),
+        (('CEBL'), ('Cebuana Lhuilier')),
         (('GCSH'), ('GCash')),
         (('SMRT'), ('Smart Money')),
     )
@@ -182,7 +182,7 @@ class DragonpayPayout(models.Model):
                 txn_id=details['txn_id'],
                 user_id=details.get('user_id'),
                 user_name=details.get('user_name'),
-                processor=details.get('processor_id'),
+                processor_id=details.get('processor_id'),
                 processor_detail=details.get('processor_detail'),
                 email=details.get('email'),
                 mobile=details.get('mobile'),
