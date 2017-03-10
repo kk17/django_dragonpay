@@ -96,6 +96,25 @@ class DragonpayPayout(models.Model):
         ('G', 'In progress'),
         ('V', 'Voided'),
     )
+
+    PROCESSORS = (
+        (('BDO', 'Banco De Oro')),
+        (('BPI', 'Bank of the Philippine Islands')),
+        (('CBC', 'Chinabank')),
+        (('EWB', 'East West Bank')),
+        (('LBP', 'Land Bank of the Philippines')),
+        (('MBTC'), ('Metrobank')),
+        (('PNB'), ('Philippine National Bank')),
+        (('RCBC'), ('RCBC')),
+        (('SBC'), ('Security Bank')),
+        (('UBP'), ('Union Bank')),
+        (('UCPB'), ('UCPB')),
+        (('PSB'), ('PS Bank')),
+        # (('CEBL'), ('Cebuana Lhuilier')),
+        (('GCSH'), ('GCash')),
+        (('SMRT'), ('Smart Money')),
+    )
+
     txn_id = models.CharField(max_length=40)
 
     # For payout registerd user
@@ -103,7 +122,8 @@ class DragonpayPayout(models.Model):
 
     # For non-registered, one time payout
     user_name = models.CharField(max_length=32, null=True, blank=True)
-    processor_id = models.CharField(max_length=8, null=True, blank=True)
+    processor_id = models.CharField(
+        max_length=8, null=True, blank=True, choices=PROCESSORS)
     processor_detail = models.CharField(max_length=32, null=True, blank=True)
     email = models.CharField(max_length=32, null=True, blank=True)
     mobile = models.CharField(max_length=32, null=True, blank=True)
@@ -132,7 +152,7 @@ class DragonpayPayout(models.Model):
         database.'''
 
         from django_dragonpay.api.soap import get_payout_txn_status
-        from django_dragonpay.constants import DRAGONPAY_PAYOUT_STATUS_CODES
+        from django_dragonpay.constants import DRAGONPAY_STATUS_CODES
 
         status = get_payout_txn_status(self.txn_id)
 
@@ -140,7 +160,7 @@ class DragonpayPayout(models.Model):
         if status and status != self.status:
             logger.info(
                 '[%s] status updated to %s',
-                self.txn_id, DRAGONPAY_PAYOUT_STATUS_CODES[status])
+                self.txn_id, DRAGONPAY_STATUS_CODES[status])
 
             self.status = status
             self.save(updated_fields=['status'])
@@ -162,7 +182,7 @@ class DragonpayPayout(models.Model):
                 txn_id=details['txn_id'],
                 user_id=details.get('user_id'),
                 user_name=details.get('user_name'),
-                processor_id=details.get('processor_id'),
+                processor=details.get('processor_id'),
                 processor_detail=details.get('processor_detail'),
                 email=details.get('email'),
                 mobile=details.get('mobile'),

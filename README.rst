@@ -95,6 +95,12 @@ To send a payout, use the **request_payout_ex** method::
             # see constants.DRAGONPAY_PAYOUT_ERROR_CODES for the complete
             # list of ERROR_CODES for PAYOUT
 
+
+When using the TEST Environment, payouts will not be completed unless you will request for DragonPay operations to update the status of the test request.
+
+If you enable storing to database by setting **DRAGONPAY_SAVE_DATA** to **True**, everytime a successful transaction (payment, or payout), a record will be added to the database.
+
+
 Logging
 -------
 

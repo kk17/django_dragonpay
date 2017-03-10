@@ -12,7 +12,7 @@ from django_dragonpay.utils import encrypt_data, generate_txn_id
 from django_dragonpay import settings as dp_settings
 from django_dragonpay.constants import (
     DRAGONPAY_STATUS_CODES, DRAGONPAY_ERROR_CODES,
-    DRAGONPAY_PAYOUT_STATUS_CODES, DRAGONPAY_PAYOUT_ERROR_CODES)
+    DRAGONPAY_PAYOUT_ERROR_CODES)
 
 logger = logging.getLogger('dragonpay')
 
@@ -254,9 +254,9 @@ def get_payout_txn_status(txn_id):
 
     logger.debug(
         '[%s] txn status %s',
-        txn_id, DRAGONPAY_PAYOUT_STATUS_CODES[txn_status])
+        txn_id, DRAGONPAY_STATUS_CODES[txn_status])
 
-    return status
+    return txn_status
 
 
 def modify_payout_channel():

@@ -8,7 +8,8 @@ DRAGONPAY_STATUS_CODES = {
     'R': 'Refund',
     'K': 'Chargeback',
     'V': 'Voided',
-    'A': 'Authorized'
+    'A': 'Authorized',
+    'G': 'In progress',
 }
 
 # Dragonpay error codes.
@@ -30,14 +31,6 @@ DRAGONPAY_ERROR_CODES = {
     '202': 'Invalid Merchant Password'
 }
 
-
-DRAGONPAY_PAYOUT_STATUS_CODES = {
-    'S': 'Success',
-    'F': 'Failed',
-    'P': 'Pending',
-    'G': 'In progress',
-    'V': 'Voided',
-}
 
 DRAGONPAY_PAYOUT_ERROR_CODES = {
     '0': 'Successfully created payout request',
