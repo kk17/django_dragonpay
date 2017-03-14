@@ -21,6 +21,9 @@ class DragonpayPayoutUser(models.Model):
     state = models.CharField(max_length=16)
     zip = models.CharField(max_length=8)
 
+    class Meta:
+        app_label = 'django_dragonpay'
+
 
 class DragonpayTransaction(models.Model):
     STATUS_CODES = (
@@ -45,6 +48,9 @@ class DragonpayTransaction(models.Model):
     status = models.CharField(max_length=1, choices=STATUS_CODES, default='P')
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'django_dragonpay'
 
     def __unicode__(self):
         return '%s [%s:%s] %s' % (
@@ -136,6 +142,9 @@ class DragonpayPayout(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)    # timestamp field
     modified_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'django_dragonpay'
 
     def __unicode__(self):
         return '%s [%s] %s %s' % (

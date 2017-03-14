@@ -1,3 +1,3 @@
 include LICENSE
 include README.rst
-include django_dragonpay/templates/*.xml
+include django_dragonpay/templates/dragonpay_soapxml/*.xml
