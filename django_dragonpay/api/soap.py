@@ -16,7 +16,7 @@ from django_dragonpay.constants import (
 
 logger = logging.getLogger('dragonpay')
 
-HEADERS = {'Content-Type': 'text/xml'}
+HEADERS = {'Content-Type': 'text/xml; charset=utf-8'}
 # constant context containinig api keys and passwords
 CONTEXT = {
     'dp_merchant_id': dp_settings.DRAGONPAY_ID,
@@ -51,7 +51,9 @@ def _dragonpay_soap_wrapper(
     else:
         url = dp_settings.DRAGONPAY_PAYOUT_URL
 
-    logger.debug('Sending XML [%s]:\n%s', url, xml)
+    logger.debug(
+        'Sending SOAP Request to [%s]:\nHEADERS: %s\nXML:%s',
+        url, headers, xml)
     response = requests.post(url, data=xml, headers=headers)
 
     try:
