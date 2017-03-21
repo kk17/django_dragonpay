@@ -37,9 +37,13 @@ class DragonpayTransaction(models.Model):
         ('A', 'Authorized'),
     )
 
-    id = models.CharField(primary_key=True, max_length=40)
+    CURRENCIES = (('PHP', 'Philippine Peso'), ('USD', 'US Dollar'))
+
+    id = models.CharField(primary_key=True, max_length=40)  # transaction id
+    token = models.CharField(max_length=40)                 # tokenid id
     amount = models.DecimalField(max_digits=8, decimal_places=2)
-    currency = models.CharField(max_length=3, default='PHP')
+    currency = models.CharField(
+        max_length=3, choices=CURRENCIES, default='PHP')
     description = models.CharField(max_length=128)
     email = models.CharField(max_length=40)
     param1 = models.CharField(max_length=80, null=True, blank=True)
@@ -91,6 +95,7 @@ class DragonpayTransaction(models.Model):
             email=details['email'],
             param1=details.get('param1'),
             param2=details.get('param2'),
+            token=details.get('token')
         )
 
 
