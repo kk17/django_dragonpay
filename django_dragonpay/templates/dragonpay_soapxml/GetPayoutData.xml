@@ -1,5 +1,5 @@
 {% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
-<{{ web_method }} xmlns="http://api.dragonpay.ph"/>
+<tns:{{ web_method }} xmlns="http://api.dragonpay.ph"/>
 {% endblock%}

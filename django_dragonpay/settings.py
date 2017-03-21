@@ -22,5 +22,5 @@ else:
 # Other Dragonpay URLs
 DRAGONPAY_PAY_URL = DRAGONPAY_BASE_URL + 'Pay.aspx'
 DRAGONPAY_MERCHANT_URL = DRAGONPAY_BASE_URL + 'MerchantRequest.aspx'
-DRAGONPAY_SOAP_URL = DRAGONPAY_BASE_URL + 'DragonPayWebService/MerchantService.asmx'
-DRAGONPAY_PAYOUT_URL = DRAGONPAY_PAYOUT_BASE_URL + 'DragonPayWebService/PayoutService.asmx'
+DRAGONPAY_SOAP_URL = DRAGONPAY_BASE_URL + 'DragonpayWebService/MerchantService.asmx'
+DRAGONPAY_PAYOUT_URL = DRAGONPAY_PAYOUT_BASE_URL + 'DragonpayWebService/PayoutService.asmx'

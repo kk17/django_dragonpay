@@ -1,9 +1,9 @@
 {% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
-<{{ web_method }} xmlns="http://api.dragonpay.ph">
-    <merchantId>{{ dp_merchant_id }}</merchantId>
-    <merchantPwd>{{ dp_merchant_secret }}</merchantPwd>
-    <txnId>{{ txn_id }}</txnId>
-</{{ web_method }}>
+<tns:{{ web_method }} xmlns="http://api.dragonpay.ph">
+    <tns:merchantId>{{ dp_merchant_id }}</tns:merchantId>
+    <tns:merchantPwd>{{ dp_merchant_secret }}</tns:merchantPwd>
+    <tns:txnId>{{ txn_id }}</tns:txnId>
+</tns:{{ web_method }}>
 {% endblock%}

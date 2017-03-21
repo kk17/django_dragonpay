@@ -1,19 +1,19 @@
 {% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
-<RegisterPayoutUser xmlns="http://api.dragonpay.ph/">
-  <apiKey>{{ dp_merchant_apikey }}</apiKey>
-  <firstName>{{ first_name }}</firstName>
-  <middleName>{{ middle_name }}</middleName>
-  <lastName>{{ last_name }}</lastName>
-  <address1>{{ address1 }}</address1>
-  <address2>{{ address2 }}</address2>
-  <city>{{ city }}</city>
-  <state>{{ state }}</state>
-  <country>{{ country }}</country>
-  <zipCode>{{ zip }}</zipCode>
-  <mobileNo>{{ mobile }}</mobileNo>
-  <email>{{ email }}</email>
-  <birthDate>{{ birthdate }}</birthDate>
-</RegisterPayoutUser>
+<tns:RegisterPayoutUser xmlns="http://api.dragonpay.ph/">
+  <tns:apiKey>{{ dp_merchant_apikey }}</tns:apiKey>
+  <tns:firstName>{{ first_name }}</tns:firstName>
+  <tns:middleName>{{ middle_name }}</tns:middleName>
+  <tns:lastName>{{ last_name }}</tns:lastName>
+  <tns:address1>{{ address1 }}</tns:address1>
+  <tns:address2>{{ address2 }}</tns:address2>
+  <tns:city>{{ city }}</tns:city>
+  <tns:state>{{ state }}</tns:state>
+  <tns:country>{{ country }}</tns:country>
+  <tns:zipCode>{{ zip }}</tns:zipCode>
+  <tns:mobileNo>{{ mobile }}</tns:mobileNo>
+  <tns:email>{{ email }}</tns:email>
+  <tns:birthDate>{{ birthdate }}</tns:birthDate>
+</tns:RegisterPayoutUser>
 {% endblock %}

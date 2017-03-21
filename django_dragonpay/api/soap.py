@@ -52,7 +52,7 @@ def _dragonpay_soap_wrapper(
         url = dp_settings.DRAGONPAY_PAYOUT_URL
 
     logger.debug(
-        'Sending SOAP Request to [%s]:\nHEADERS: %s\nXML:%s',
+        'Sending SOAP Request to [%s]:\nHEADERS: %s\nXML:\n%s',
         url, headers, xml)
     response = requests.post(url, data=xml, headers=headers)
 
@@ -133,10 +133,11 @@ def get_txn_token(amount, description, email, txn_id=None, **params):
 
         context[key] = value
 
-    DragonpayTransaction.create_from_dict(context)
-
     logger.debug('get_txn_token payload: %s', context)
     token = _dragonpay_get_wrapper('GetTxnToken', context=context)
+
+    context['token'] = token
+    DragonpayTransaction.create_from_dict(context)
 
     # check if the response token is an error code
     if len(token) < 4:

@@ -1,11 +1,11 @@
 {% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
-    <ModifyPayoutChannel xmlns="http://api.dragonpay.ph/">
-      <apiKey>{{ dp_merchant_apikey }}</apiKey>
-      <userId>{{ user_id }}</userId>
-      <procId>{{ processor_id }}</procId>
-      <procDetail1>{{ processor_detail1 }}</procDetail1>
-      <procDetail2>{{ processor_detail2 }}</procDetail2>
-    </ModifyPayoutChannel>
+    <tns:ModifyPayoutChannel xmlns="http://api.dragonpay.ph/">
+      <tns:apiKey>{{ dp_merchant_apikey }}</tns:apiKey>
+      <tns:userId>{{ user_id }}</tns:userId>
+      <tns:procId>{{ processor_id }}</tns:procId>
+      <tns:procDetail1>{{ processor_detail1 }}</tns:procDetail1>
+      <tns:procDetail2>{{ processor_detail2 }}</tns:procDetail2>
+    </tns:ModifyPayoutChannel>
 {% endblock%}

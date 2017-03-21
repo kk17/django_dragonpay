@@ -1,17 +1,17 @@
 {% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
-<RequestPayoutEx xmlns="http://api.dragonpay.ph/">
-   <apiKey>{{ dp_merchant_apikey }}</apiKey>
-   <merchantTxnId>{{ txn_id }}</merchantTxnId>
-   <userName>{{ user_name }}</userName>
-   <amount>{{ amount }}</amount>
-   <currency>{{ currency|default:"PHP" }}</currency>
-   <description>{{ description }}</description>
-   <procId>{{ processor_id }}</procId>
-   <procDetail>{{ processor_detail }}</procDetail>
-   <runDate>{{ timestamp|date:"c" }}</runDate>
-   <email>{{ email }}</email>
-   <mobileNo>{{ mobile }}</mobileNo>
- </RequestPayoutEx>
+<tns:RequestPayoutEx xmlns="http://api.dragonpay.ph/">
+   <tns:apiKey>{{ dp_merchant_apikey }}</tns:apiKey>
+   <tns:merchantTxnId>{{ txn_id }}</tns:merchantTxnId>
+   <tns:userName>{{ user_name }}</tns:userName>
+   <tns:amount>{{ amount }}</tns:amount>
+   <tns:currency>{{ currency|default:"PHP" }}</tns:currency>
+   <tns:description>{{ description }}</tns:description>
+   <tns:procId>{{ processor_id }}</tns:procId>
+   <tns:procDetail>{{ processor_detail }}</tns:procDetail>
+   <tns:runDate>{{ timestamp|date:"c" }}</tns:runDate>
+   <tns:email>{{ email }}</tns:email>
+   <tns:mobileNo>{{ mobile }}</tns:mobileNo>
+ </tns:RequestPayoutEx>
 {% endblock %}

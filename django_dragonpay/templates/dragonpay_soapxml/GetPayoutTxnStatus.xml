@@ -1,8 +1,8 @@
 {% extends 'dragonpay_soapxml/base.xml' %}
 
 {% block body %}
-<GetTxnStatus xmlns="http://api.dragonpay.ph">
-    <apiKey>{{ dp_merchant_apikey }}</apiKey>
-    <merchantTxnId>{{ txn_id }}</merchantTxnId>
-</GetTxnStatus>
-{% endblock%}
+<tns:GetTxnStatus xmlns:tns="http://api.dragonpay.ph/">
+    <tns:merchantTxnId>{{ txn_id }}</tns:merchantTxnId>
+    <tns:apiKey>{{ dp_merchant_apikey }}</tns:apiKey>
+</tns:GetTxnStatus>
+{% endblock %}
