@@ -13,6 +13,7 @@ from django_dragonpay import settings as dp_settings
 from django_dragonpay.constants import (
     DRAGONPAY_STATUS_CODES, DRAGONPAY_ERROR_CODES,
     DRAGONPAY_PAYOUT_ERROR_CODES)
+from django_dragonpay.exceptions import DragonpayException
 
 logger = logging.getLogger('dragonpay')
 
@@ -69,7 +70,9 @@ def _dragonpay_soap_wrapper(
     if response.status_code != 200:
         logger.error(
             'Invalid response %s:\n%s', response.status_code, xml_pretty)
-
+        raise DragonpayException(
+            '[%d] Dragonpay %s request failed' % (
+                response.status_code, webmethod))
     else:
         logger.debug('Success\n%s', xml_pretty)
         return xmltree
