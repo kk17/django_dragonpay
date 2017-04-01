@@ -79,7 +79,7 @@ class DragonpayTransaction(models.Model):
                 self.txn_id, DRAGONPAY_STATUS_CODES[status])
 
             self.status = status
-            self.save(updated_fields=['status'])
+            self.save(update_fields=['status'])
 
     @classmethod
     def create_from_dict(cls, details):
@@ -177,7 +177,7 @@ class DragonpayPayout(models.Model):
                 self.txn_id, DRAGONPAY_STATUS_CODES[status])
 
             self.status = status
-            self.save(updated_fields=['status'])
+            self.save(update_fields=['status'])
 
     @classmethod
     def create_from_dict(cls, details):

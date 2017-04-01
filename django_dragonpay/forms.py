@@ -48,7 +48,8 @@ class DragonpayCallbackForm(forms.Form):
                 param = self.cleaned_data.get(key)
 
                 if param:
-                    logger.debug('Decrypting %s', param)
                     self.cleaned_data['param1'] = decrypt_data(param)
+                    logger.debug(
+                        'Decrypting %s:%s', param, self.cleaned_data['param1'])
 
         return self.cleaned_data
