@@ -140,6 +140,7 @@ def get_txn_token(amount, description, email, txn_id=None, **params):
     token = _dragonpay_get_wrapper('GetTxnToken', context=context)
 
     context['token'] = token
+    context.update(params)      # include the raw params back to context
     DragonpayTransaction.create_from_dict(context)
 
     # check if the response token is an error code

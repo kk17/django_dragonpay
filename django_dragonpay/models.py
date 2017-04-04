@@ -23,6 +23,8 @@ class DragonpayPayoutUser(models.Model):
 
     class Meta:
         app_label = 'django_dragonpay'
+        verbose_name = "Payout User"
+        verbose_name_plural = "Payout Users"
 
 
 class DragonpayTransaction(models.Model):
@@ -51,18 +53,16 @@ class DragonpayTransaction(models.Model):
 
     status = models.CharField(max_length=1, choices=STATUS_CODES, default='P')
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(null=True, blank=True)
+    modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'django_dragonpay'
+        verbose_name = "Transaction"
+        verbose_name_plural = "Transactions"
 
     def __unicode__(self):
         return '%s [%s:%s] %s' % (
             self.get_status_display(), self.id, self.amount, self.email)
-
-    @property
-    def is_completed(self):
-        return self.modified_at is not None
 
     def fetch_status(self):
         '''Query DragonPay for the status of this transaction and update the
@@ -150,6 +150,8 @@ class DragonpayPayout(models.Model):
 
     class Meta:
         app_label = 'django_dragonpay'
+        verbose_name = "Payout"
+        verbose_name_plural = "Payouts"
 
     def __unicode__(self):
         return '%s [%s] %s %s' % (
