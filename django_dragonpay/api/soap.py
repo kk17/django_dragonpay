@@ -96,20 +96,23 @@ def _dragonpay_get_wrapper(webmethod, xml_name=None, context={}, payout=False):
         return response
 
 
-def get_txn_url_from_token(token):
+def get_txn_url_from_token(token, proc_id=None):
     '''Returns the DragonPay payment URL given a token.'''
 
-    path = urllib.urlencode({'tokenid': token})
-    return dp_settings.DRAGONPAY_PAY_URL + '?' + path
+    d = {'tokenid': token}
+    if proc_id:
+        d['procid'] = proc_id
+
+    return dp_settings.DRAGONPAY_PAY_URL + '?' + urllib.urlencode(d)
 
 
-def get_txn_token_url(amount, description, email, **params):
+def get_txn_token_url(amount, description, email, proc_id=None, **params):
     '''Creates a DragonPay transaction and returns the Payment Switch URL.'''
 
     token = get_txn_token(amount, description, email, **params)
 
     if token:
-        return get_txn_url_from_token(token[1])
+        return get_txn_url_from_token(token[1], proc_id)
 
 
 def get_txn_token(amount, description, email, txn_id=None, **params):
