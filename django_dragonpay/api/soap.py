@@ -127,7 +127,7 @@ def get_txn_token(amount, description, email, txn_id=None, **params):
     txn_id = txn_id or generate_txn_id()
     context = {
         'txn_id': txn_id, 'amount': amount, 'email': email,
-        'description': 'description'}
+        'description': description}
 
     logger.debug('params %s', params)
     # include the params in the context
@@ -197,12 +197,12 @@ def get_txn_ref_no(txn_id):
 
 
 def get_available_processors(amount):
-    context = {'amount': amount}
+    context = {'web_method': 'GetAvailableProcessors', 'amount': amount}
     context.update(CONTEXT)
 
-    xml = render_to_string('dragonpay_soapxml/webmethod.xml', context=context)
-
-    return _dragonpay_soap_wrapper(xml, success=_success, error=_error)
+    return _dragonpay_get_wrapper(
+        'GetAvailableProcessors', 'GetAvailableProcessors',
+        context=context)
 
 
 def get_email_instructions(refno):
@@ -373,8 +373,14 @@ def request_payout_ex(
         # save the dragonpay payout transaction to the database
         DragonpayPayout.create_from_dict(context)
     else:
-        logger.error(
-            '[%s] %s', response_code,
-            DRAGONPAY_PAYOUT_ERROR_CODES[response_code])
+        try:
+            logger.error(
+                '[%s] %s', response_code,
+                DRAGONPAY_PAYOUT_ERROR_CODES[response_code])
+        except KeyError:
+            # Error is not in listed keys
+            logger.error(
+                'Error code [%s] not in DRAGONPAY_PAYOUT_ERROR_CODES',
+                response_code)
 
     return response_code, txn_id

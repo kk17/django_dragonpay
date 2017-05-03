@@ -3,7 +3,7 @@ from django.contrib import admin
 from django_dragonpay.models import *
 
 
-def readable_amount(obj):
+def amount(obj):
     return "{} {:,}".format(obj.currency, obj.amount)
 
 
@@ -26,9 +26,10 @@ class PayoutUserAdmin(admin.ModelAdmin):
 
 class TransactionAdmin(admin.ModelAdmin):
     date_heirarchy = 'created_at'
+    ordering = ('-created_at',)
     search_fields = ('txn_id', 'email')
     list_filter = (StatusPayoutsFilter, )
-    list_display = ('token', 'status', readable_amount, 'description', 'email')
+    list_display = ('token', 'status', amount, 'description', 'email')
 
 
 class PayoutsAdmin(admin.ModelAdmin):
@@ -55,7 +56,7 @@ class PayoutsAdmin(admin.ModelAdmin):
     search_fields = ('txn_id', 'user_id', 'user_name', 'email')
     list_filter = (CompletedPayoutsFilter, StatusPayoutsFilter)
     list_display = (
-        'txn_id', 'user_name', 'email', readable_amount, 'description')
+        'txn_id', 'user_name', 'email', amount, 'description')
 
 
 admin.site.register(DragonpayPayoutUser, PayoutUserAdmin)
