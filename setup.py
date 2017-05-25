@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='django_dragonpay',
-    version='0.1.4',
+    version='0.1.5',
     description='DragonPay plugin for Django',
     author='Ivan Dominic Baguio',
     author_email='baguio.ivan@gmail.com',
