@@ -30,7 +30,11 @@ class DragonpayCallbackForm(forms.Form):
         from django_dragonpay.utils import get_dragonpay_digest
 
         KEYS = ['txnid', 'refno', 'status', 'message']
-        to_digest = ':'.join([self.cleaned_data[key] for key in KEYS])
+        try:
+            to_digest = ':'.join([self.cleaned_data[key] for key in KEYS])
+        except KeyError as e:
+            logger.error('%s not found in request', e)
+            raise forms.ValidationError('%s not found in request' % e)
 
         digest = get_dragonpay_digest(to_digest)
 
@@ -40,7 +44,7 @@ class DragonpayCallbackForm(forms.Form):
                 'Request hash [%s] doesnt match caclulated [%s]',
                 self.cleaned_data['digest'], digest)
 
-            forms.ValidationError("DragonPay digest doesn't match!")
+            raise forms.ValidationError("DragonPay digest doesn't match!")
 
         # Decrypt params if they are encrypted
         if dp_settings.DRAGONPAY_ENCRYPT_PARAMS:

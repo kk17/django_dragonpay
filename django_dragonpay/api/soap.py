@@ -372,6 +372,9 @@ def request_payout_ex(
     if response_code == '0':
         # save the dragonpay payout transaction to the database
         DragonpayPayout.create_from_dict(context)
+    elif response_code == '-9':
+        logger.error(
+            'Source IP Address not whitelisted. Contact Dragonpay Support')
     else:
         try:
             logger.error(
