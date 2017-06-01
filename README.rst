@@ -26,8 +26,8 @@ Quick Start
     DRAGONPAY_ID = "MYCOMPANY"
     DRAGONPAY_PASSWORD = "password"
     DRAGONPAY_API_KEY = "api_key"
-    DRAGONPAY_ENCRYPT_PARAMS = Yes     # Enable encryption of request parameters
-    DRAGONPAY_TXN_LENGTH = 20          # Length of transaction ids
+    DRAGONPAY_ENCRYPT_PARAMS = True    # Enable encryption of request parameters
+    DRAGONPAY_TXN_LENGTH = 20          # Length of transaction Ids
     DRAGONPAY_SAVE_DATA = True         # Save transaction and payout data to database
 
 3. If you choose to enable **DRAGONPAY_SAVE_DATA** you will need to run migrations.::
@@ -99,6 +99,24 @@ To send a payout, use the **request_payout_ex** method::
 When using the TEST Environment, payouts will not be completed unless you will request for DragonPay operations to update the status of the test request.
 
 If you enable storing to database by setting **DRAGONPAY_SAVE_DATA** to **True**, everytime a successful transaction (payment, or payout), a record will be added to the database.
+
+Handling Callbacks
+~~~~~~~~~~~~~~~
+
+DragonPay sends callbacks for every successful transaction update (Success, Pending, Canceled, etc).
+To easily handle these requests, create a Class Based View inheriting the
+``django_dragonpay.views.DragonpayCallbackBaseHandler`` and implement your own
+``get`` and ``post`` methods. For more information, checkout the docs/create-a-callback-handler.md::
+
+
+    from django_dragonpay.views import DragonpayCallbackBaseHandler
+
+    class MyDragonpayCallbackHander(DragonpayCallbackBaseHandler):
+        def get(self, request, *args, **kwargs):
+            pass
+
+        def post(self, request, *args, **kwargs):
+            pass
 
 
 Logging

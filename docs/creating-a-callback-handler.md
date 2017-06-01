@@ -3,7 +3,7 @@ Creating a DragonPay Callback Handler
 
 ### Overview
 
-Every after succsesful transaction update (Success, Pending, Canceled), DragonPay sends a HTTP POST request to your application's registered callback handler about the transaction update. This data can be processed by the `DragonpayCallbackForm` form. Subsequently, most times DragonPay also redirects the user to your registered callback handler containing the same data in the POST request.
+Every after succsesful transaction update (Success, Pending, Canceled, etc), DragonPay sends a HTTP POST request to your application's registered callback handler about the transaction update. This data can be processed by the `DragonpayCallbackForm` form. Subsequently, most times DragonPay also redirects the user to your registered callback handler containing the same data in the POST request.
 
 The HTTP POST request will almost always be before the GET redirect, unless on cases where latency/traffic volume is high.
 
