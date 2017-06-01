@@ -9,7 +9,7 @@ from django_dragonpay.models import DragonpayTransaction
 logger = logging.getLogger('django_dragonpay.views')
 
 
-class DragonpayCallbackHandler(generic.View):
+class DragonpayCallbackBaseHandler(generic.View):
     '''Base view to handle Dragonpay callback transactions that
     updates the transactions in database.
 
@@ -32,31 +32,36 @@ class DragonpayCallbackHandler(generic.View):
     '''
 
     allow_invalid_data = True    # should we crash if the data is invalid?
+    update_on_GET = False        # should we update txns on GET request?
 
     def dispatch(self, *args, **kwargs):
-        # if save data settings is enabled, update the
+        # if DRAGONPAY_SAVE_DATA settings is True, update the
         # DragonpayTransaction row for this transaction
+        self.form = DragonpayCallbackForm(
+            self.request.POST or self.request.GET)
 
-        if settings.DRAGONPAY_SAVE_DATA:
-            self.form = DragonpayCallbackForm(
-                self.request.POST or self.request.GET)
+        if not self.form.is_valid():
+            logger.error(
+                'Invalid Dragonpay callback request: %s', self.form.errors)
 
-            if not self.form.is_valid():
-                logger.error(
-                    'Invalid Dragonpay callback request: %s', self.form.error)
+            if not self.allow_invalid_data:
+                raise Exception('Invalid Dragonpay request')
 
+        if self.request.method == 'GET' and not self.update_on_GET:
+            # skip transaction updates if its a GET request
+            pass
+
+        elif settings.DRAGONPAY_SAVE_DATA:
+            try:
+                txn = DragonpayTransaction.objects.get(
+                    id=self.form.cleaned_data['txnid'])
+            except DragonpayTransaction.DoesNotExist as e:
                 if not self.allow_invalid_data:
-                    raise Exception('Invalid Dragonpay request')
+                    raise e
             else:
-                try:
-                    txn = DragonpayTransaction.objects.get(
-                        id=self.form.cleaned_data['txnid'])
-                except DragonpayTransaction.DoesNotExist as e:
-                    if not self.allow_invalid_data:
-                        raise e
-                else:
-                    # update the status of the transaction
-                    txn.status = self.form.cleaned_data['status']
-                    txn.save(update_fields=['status'])
+                # update the status of the transaction
+                txn.status = self.form.cleaned_data['status']
+                txn.save(update_fields=['status'])
 
-        return super(DragonpayCallbackHandler, self).dispatch(*args, **kwargs)
+        return super(
+            DragonpayCallbackBaseHandler, self).dispatch(*args, **kwargs)
