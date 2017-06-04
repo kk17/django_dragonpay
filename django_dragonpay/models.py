@@ -44,6 +44,7 @@ class DragonpayTransaction(models.Model):
     id = models.CharField(
         primary_key=True, max_length=40, verbose_name='Transaction ID')
     token = models.CharField(max_length=40)                 # tokenid id
+    refno = models.CharField(max_length=8, null=True, blank=True)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     currency = models.CharField(
         max_length=3, choices=CURRENCIES, default='PHP')

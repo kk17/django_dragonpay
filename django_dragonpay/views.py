@@ -61,7 +61,12 @@ class DragonpayCallbackBaseHandler(generic.View):
             else:
                 # update the status of the transaction
                 txn.status = self.form.cleaned_data['status']
-                txn.save(update_fields=['status'])
+
+                # set the reference number if it is still null
+                if not txn.refno:
+                    txn.refno = self.form.cleaned_data['refno']
+
+                txn.save(update_fields=['status', 'refno'])
 
         return super(
             DragonpayCallbackBaseHandler, self).dispatch(*args, **kwargs)

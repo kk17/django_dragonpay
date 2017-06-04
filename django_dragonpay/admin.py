@@ -26,15 +26,15 @@ class PayoutUserAdmin(admin.ModelAdmin):
 
 class TransactionAdmin(admin.ModelAdmin):
     fields = (
-        'id', 'token', 'status', 'amount', 'currency', 'email', 'description',
-        'param1', 'param2')
+        'id', 'token', 'refno', 'status', 'amount', 'currency', 'email',
+        'description', 'param1', 'param2')
     date_heirarchy = 'created_at'
     ordering = ('-created_at',)
     search_fields = ('txn_id', 'email')
     list_filter = (StatusPayoutsFilter, )
-    list_display = ('token', 'status', amount, 'description', 'email')
+    list_display = ('token', 'refno', 'status', amount, 'description', 'email')
     readonly_fields = (
-        'modified_at', 'id', 'token', 'amount', 'currency', 'email',
+        'modified_at', 'id', 'token', 'amount', 'currency', 'email', 'refno',
         'description', 'param1', 'param2')
 
 
