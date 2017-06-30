@@ -78,7 +78,7 @@ class DragonpayTransaction(models.Model):
         if status != self.status:
             logger.info(
                 '[%s] status updated to %s',
-                self.txn_id, DRAGONPAY_STATUS_CODES[status])
+                self.id, DRAGONPAY_STATUS_CODES[status])
 
             self.status = status
             self.save(update_fields=['status'])
@@ -128,7 +128,9 @@ class DragonpayPayout(models.Model):
         (('SMRT'), ('Smart Money')),
     )
 
-    txn_id = models.CharField(max_length=40)
+    id = models.CharField(
+        primary_key=True, max_length=40, verbose_name='Transaction ID')
+    refno = models.CharField(max_length=8, null=True, blank=True)
 
     # For payout registerd user
     user_id = models.CharField(max_length=40, null=True, blank=True)
@@ -157,7 +159,7 @@ class DragonpayPayout(models.Model):
 
     def __unicode__(self):
         return '%s [%s] %s %s' % (
-            self.get_status_display(), self.txn_id, self.amount,
+            self.get_status_display(), self.id, self.amount,
             self.user_id or self.user_name)
 
     @property
@@ -172,13 +174,13 @@ class DragonpayPayout(models.Model):
         from django_dragonpay.api.soap import get_payout_txn_status
         from django_dragonpay.constants import DRAGONPAY_STATUS_CODES
 
-        status = get_payout_txn_status(self.txn_id)
+        status = get_payout_txn_status(self.id)
 
         # update the status
         if status and status != self.status:
             logger.info(
                 '[%s] status updated to %s',
-                self.txn_id, DRAGONPAY_STATUS_CODES[status])
+                self.id, DRAGONPAY_STATUS_CODES[status])
 
             self.status = status
             self.save(update_fields=['status'])
@@ -197,7 +199,7 @@ class DragonpayPayout(models.Model):
                 'Payout txn [%s] saved to database', details['txn_id'])
 
             return DragonpayPayout.objects.create(
-                txn_id=details['txn_id'],
+                id=details['txn_id'],
                 user_id=details.get('user_id'),
                 user_name=details.get('user_name'),
                 processor_id=details.get('processor_id'),
@@ -219,7 +221,7 @@ class DragonpayPayout(models.Model):
 
                 payouts.append(
                     DragonpayPayout.objects.create(
-                        txn_id=detail['txn_id'],
+                        id=detail['txn_id'],
                         user_id=detail['user_id'],
                         amount=detail['amount'],
                         description=detail['description'],

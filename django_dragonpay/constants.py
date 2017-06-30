@@ -44,6 +44,13 @@ DRAGONPAY_PAYOUT_ERROR_CODES = {
     '-8': 'A payout has been previously requested for the same merchant txn id'
 }
 
+
+ACCOUNT_NUMBER_LENGTHS = {
+    'BDO': 10, 'BPI': 10, 'CBC': 10, 'EWB': 12, 'LBP': 10,
+    'MBTC': 13, 'RCBC': 10, 'SBC': 13, 'UBP': 12, 'UCPB': 12
+}
+
+
 # Dragonpay Paymemnt method FILTERS
 ONLINE_BANKING = 1       # Online banking
 OTC_BANK = 2             # Over-the-Counter Banking and ATM

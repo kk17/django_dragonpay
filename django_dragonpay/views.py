@@ -3,10 +3,13 @@ import logging
 from django.views import generic
 from django.conf import settings
 
-from django_dragonpay.forms import DragonpayCallbackForm
-from django_dragonpay.models import DragonpayTransaction
+from django_dragonpay.forms import *
+from django_dragonpay.models import DragonpayTransaction, DragonpayPayout
 
 logger = logging.getLogger('django_dragonpay.views')
+
+
+__all__ = ['DragonpayCallbackBaseHandler', 'DragonpayPayoutBaseHandler']
 
 
 class DragonpayCallbackBaseHandler(generic.View):
@@ -67,6 +70,38 @@ class DragonpayCallbackBaseHandler(generic.View):
                     txn.refno = self.form.cleaned_data['refno']
 
                 txn.save(update_fields=['status', 'refno'])
-
+                logger.debug(
+                    'Transaction %s updated to %s', txn.id, txn.status)
         return super(
             DragonpayCallbackBaseHandler, self).dispatch(*args, **kwargs)
+
+
+class DragonpayPayoutBaseHandler(generic.View):
+    allow_invalid_data = True    # should we crash if the data is invalid?
+
+    def dispatch(self, request, *args, **kwargs):
+        self.form = DragonpayPayoutCallbackForm(request.GET)
+
+        if not self.form.is_valid():
+            logger.error(
+                'Invalid Dragonpay callback request: %s', self.form.errors)
+            if not self.allow_invalid_data:
+                raise Exception('Invalid Dragonpay request')
+
+        if settings.DRAGONPAY_SAVE_DATA:
+            try:
+                txn = DragonpayPayout.objects.get(
+                    id=self.form.cleaned_data['merchanttxnid'])
+            except Exception as e:
+                if not self.allow_invalid_data:
+                    raise e
+            else:
+                txn.status = self.form.cleaned_data['status']
+                txn.refno = self.form.cleaned_data['refno']
+
+                txn.save(update_fields=['status', 'refno'])
+
+                logger.debug('Payout %s updated to %s', txn.id, txn.status)
+        return super(
+            DragonpayPayoutBaseHandler, self).dispatch(
+                request, *args, **kwargs)

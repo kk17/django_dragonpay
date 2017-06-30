@@ -30,7 +30,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'description', 'param1', 'param2')
     date_heirarchy = 'created_at'
     ordering = ('-created_at',)
-    search_fields = ('txn_id', 'email')
+    search_fields = ('id', 'email')
     list_filter = (StatusPayoutsFilter, )
     list_display = ('token', 'refno', 'status', amount, 'description', 'email')
     readonly_fields = (
@@ -59,16 +59,16 @@ class PayoutsAdmin(admin.ModelAdmin):
                 return queryset.filter(status__in=['P', 'G'])
 
     fields = (
-        'txn_id', 'user_name', 'processor_id', 'processor_detail', 'email',
+        'id', 'user_name', 'processor_id', 'processor_detail', 'email',
         'mobile', 'amount', 'description', 'currency', 'status', 'created_at',
         'modified_at')
     date_heirarchy = 'created_at'
-    search_fields = ('txn_id', 'user_id', 'user_name', 'email')
+    search_fields = ('id', 'user_id', 'user_name', 'email')
     list_filter = (CompletedPayoutsFilter, StatusPayoutsFilter)
     list_display = (
-        'txn_id', 'user_name', 'email', amount, 'description')
+        'id', 'user_name', 'email', amount, 'description')
     readonly_fields = (
-        'txn_id', 'user_name', 'processor_id', 'processor_detail', 'email',
+        'id', 'user_name', 'processor_id', 'processor_detail', 'email',
         'mobile', 'amount', 'description', 'currency', 'status', 'created_at',
         'modified_at')
 
