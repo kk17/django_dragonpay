@@ -1,3 +1,6 @@
+from collections import OrderedDict
+from django.conf import settings
+
 # Dragonpay status codes
 # See Appendix 3 of Dragonpay API documentation
 DRAGONPAY_STATUS_CODES = {
@@ -41,9 +44,58 @@ DRAGONPAY_PAYOUT_ERROR_CODES = {
     '-5': 'Invalid account no / details',
     '-6': 'Invalid pre-dated run date',
     '-7': 'Amount exceeds limit for payout channel',
-    '-8': 'A payout has been previously requested for the same merchant txn id'
+    '-8': 'A payout has been previously requested for the same merchant txn id',
+    '-9': 'Source IP Address not whitelisted.'
 }
 
+
+DRAGONPAY_PAYMENT_METHODS = {
+    'otc_bank': OrderedDict([
+        ('BOGX', 'Bogus Bank Over-the-Counter'),
+        ('BDOA', 'Banco de Oro ATM'),
+        ('BDRX', 'BDO Cash Deposit'),
+        ('BPXB', 'BPI Bills Payment'),
+        ('MBTX', 'Metrobank Cash/Check Payment'),
+        ('CBCX', 'Chinabank ATM/Cash Payment'),
+        ('EWBX', 'EastWest Online/Cash/Check Payment'),
+        ('LBXB', 'Landbank Cash Payment'),
+        ('PNBB', 'PNB e-Banking Bills Payment'),
+        ('PNXB', 'PNB Cash Payment'),
+        ('RCXB', 'RCBC Cash Payment'),
+        ('RSXB', 'RCBC Savings Cash Payment'),
+        ('SBCA', 'Security Bank ATM Bills Payment'),
+        ('SBCB', 'Security Bank Cash Payment'),
+        ('UBXB', 'Unionbank Cash Payment'),
+        ('UCXB', 'UCPB ATM/Cash Payment'),
+    ]),
+    'online_bank': OrderedDict([
+        ('BOG', 'Bogus Bank'),
+        ('BDO', 'BDO Internet Banking'),
+        ('BPI', 'BPI Express Online (Fund Transfer)'),
+        ('BPIB', 'BPI Express Online (Bills Payment)'),
+        ('MBTC', 'Metrobank Direct Online'),
+        ('CBC', 'Chinabank Online'),
+        ('LBPA', 'Landbank iAccess'),
+        ('RCBC', 'RCBC Online Banking'),
+        ('UBP', 'UnionBank eBanking'),
+        ('UCPB', 'UCPB Connect'),
+    ]),
+    'others': OrderedDict([
+        ('BAYD', 'Bayad Center'),
+        ('LBC', 'LBC'),
+        ('SMR', 'SM Dept/Supermarket/Savemore Counter'),
+        ('CEBL', 'Cebuana Lhuillier Bills Payment'),
+        ('MLH', 'M. Lhuillier'),
+        ('RDS', 'Robinsons Dept Store'),
+        ('ECPY', 'ECPay (Pawnshops, Payment Centers)'),
+        ('RLNT', 'RuralNet Banks and Coops'),
+    ])
+}
+
+if not settings.DRAGONPAY_TEST_MODE:
+    # Remove Bogus Bank from the Available Payment Methods
+    DRAGONPAY_PAYMENT_METHODS['online_bank'].pop('BOG')
+    DRAGONPAY_PAYMENT_METHODS['otc_bank'].pop('BOGX')
 
 ACCOUNT_NUMBER_LENGTHS = {
     'BDO': 10, 'BPI': 10, 'CBC': 10, 'EWB': 12, 'LBP': 10,

@@ -35,7 +35,7 @@ class TransactionAdmin(admin.ModelAdmin):
     list_display = ('token', 'refno', 'status', amount, 'description', 'email')
     readonly_fields = (
         'modified_at', 'id', 'token', 'amount', 'currency', 'email', 'refno',
-        'description', 'param1', 'param2')
+        'description', 'param1', 'param2', 'created_at', 'modified_at')
 
 
 class PayoutsAdmin(admin.ModelAdmin):

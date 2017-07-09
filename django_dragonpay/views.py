@@ -6,7 +6,7 @@ from django.conf import settings
 from django_dragonpay.forms import *
 from django_dragonpay.models import DragonpayTransaction, DragonpayPayout
 
-logger = logging.getLogger('django_dragonpay.views')
+logger = logging.getLogger('dragonpay.views')
 
 
 __all__ = ['DragonpayCallbackBaseHandler', 'DragonpayPayoutBaseHandler']

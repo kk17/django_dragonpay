@@ -37,6 +37,7 @@ class DragonpayTransaction(models.Model):
         ('K', 'Chargeback'),
         ('V', 'Voided'),
         ('A', 'Authorized'),
+        ('E', 'Expired'),
     )
 
     CURRENCIES = (('PHP', 'Philippine Peso'), ('USD', 'US Dollar'))
