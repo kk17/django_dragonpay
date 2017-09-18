@@ -101,6 +101,20 @@ class DragonpayTransaction(models.Model):
             token=details.get('token')
         )
 
+    def fetch_ref_no(self, do_update=True):
+        from django_dragonpay.api.soap import get_txn_ref_no
+        if self.refno:
+            # only fetch refno if not yet in database
+            return self.refno
+
+        refno = get_txn_ref_no(self.id)
+
+        if refno and do_update:
+            self.refno = refno
+            self.save(update_fields=['refno'])
+
+        return refno
+
 
 class DragonpayPayout(models.Model):
     STATUS_CODES = (
