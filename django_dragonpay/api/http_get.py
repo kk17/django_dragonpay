@@ -53,3 +53,7 @@ def cancel_transaction(txn_id):
 
     response.POST(DRAGONPAY_MERCHANT_URL, data=payload)
 
+def redirect_to_instructions(refno):
+    '''Redirects to the Instructions page given the refno'''
+    return redirect("%sBank/GetEmailInstruction.aspx?refno=%s" % (
+        settings.DRAGONPAY_BASE_URL, refno)
