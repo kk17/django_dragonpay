@@ -24,8 +24,8 @@ class DragonpayCallbackForm(forms.Form):
     status = forms.CharField(max_length=1)
     message = forms.CharField(max_length=128)
     digest = forms.CharField(max_length=40)
-    param1 = forms.CharField(max_length=128, required=False)
-    param2 = forms.CharField(max_length=128, required=False)
+    param1 = forms.CharField(max_length=80, required=False)
+    param2 = forms.CharField(max_length=80, required=False)
 
     def clean(self):
         '''Custom clean method to verify the message authenticity thru

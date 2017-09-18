@@ -13,7 +13,7 @@ from django_dragonpay import settings as dp_settings
 from django_dragonpay.constants import (
     DRAGONPAY_STATUS_CODES, DRAGONPAY_ERROR_CODES,
     DRAGONPAY_PAYOUT_ERROR_CODES)
-from django_dragonpay.exceptions import DragonpayException
+from django_dragonpay.exceptions import DragonpayException, ParamTooLong
 
 logger = logging.getLogger('dragonpay')
 
@@ -133,9 +133,18 @@ def get_txn_token(amount, description, email, txn_id=None, **params):
     # include the params in the context
     for key, value in params.iteritems():
         if dp_settings.DRAGONPAY_ENCRYPT_PARAMS:
+            # we cannot have a value of more than 47 chars since the
+            # equivalent encrypted value will be more than 80 chars
+            if len(value) > 47:
+                raise ParamTooLong('Param %s when encrypted is > 80 chars')
+
             # Encrypt the params to obfuscate the payload
             logger.debug('Encrypting %s', value)
             value = encrypt_data(value)
+
+        else:
+            if len(value) > 80:
+                raise ParamTooLong('Param %s length is > 80 chars')
 
         context[key] = value
 
