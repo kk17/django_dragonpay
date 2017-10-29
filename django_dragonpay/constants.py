@@ -97,6 +97,7 @@ if not settings.DRAGONPAY_TEST_MODE:
     DRAGONPAY_PAYMENT_METHODS['online_bank'].pop('BOG')
     DRAGONPAY_PAYMENT_METHODS['otc_bank'].pop('BOGX')
 
+# Account number for supported PAYOUT channels
 ACCOUNT_NUMBER_LENGTHS = {
     'BDO': 10, 'BPI': 10, 'CBC': 10, 'EWB': 12, 'LBP': 10,
     'MBTC': 13, 'RCBC': 10, 'SBC': 13, 'UBP': 12, 'UCPB': 12

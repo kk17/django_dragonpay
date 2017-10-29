@@ -1,16 +1,14 @@
 import urllib
 import logging
 
-from django.conf.settings import (
-    DRAGONPAY_ID, DRAGONPAY_MERCHANT_SECRET, DRAGONPAY_MERCHANT_URL,
-    DRAGONPAY_PAY_URL)
+from django.conf import settings
 from django_dragonpay.utils import get_dragonpay_digest
 
 logger = logging.getLogger('dragonpay.http_get')
 
 
 def get_txn_url(txn_id, amount, description, email, *params):
-    digest_list = [DRAGONPAY_ID, txn_id, amount, description, email]
+    digest_list = [settings.DRAGONPAY_ID, txn_id, amount, description, email]
 
     payload = {
         'merchantid': DRAGONPAY_ID,
@@ -35,23 +33,24 @@ def get_txn_url(txn_id, amount, description, email, *params):
 
 def get_txn_status(txn_id):
     payload = {
-        'merchantid': DRAGONPAY_ID,
-        'merchantpwd': DRAGONPAY_MERCHANT_SECRET,
+        'merchantid': settings.DRAGONPAY_ID,
+        'merchantpwd': settings.DRAGONPAY_PASSWORD,
         'txnid': txn_id,
         'op': 'GETSTATUS'
     }
 
-    response.POST(DRAGONPAY_MERCHANT_URL, data=payload)
+    response.POST(settings.DRAGONPAY_MERCHANT_URL, data=payload)
 
 
 def cancel_transaction(txn_id):
     payload = {
-        'merchantid': DRAGONPAY_ID,
-        'merchantpwd': DRAGONPAY_MERCHANT_SECRET,
+        'merchantid': settings.DRAGONPAY_ID,
+        'merchantpwd': settings.DRAGONPAY_PASSWORD,
         'txnid': txn_id, 'op': 'VOID'
     }
 
-    response.POST(DRAGONPAY_MERCHANT_URL, data=payload)
+    response.POST(settings.DRAGONPAY_MERCHANT_URL, data=payload)
+
 
 def redirect_to_instructions(refno):
     '''Redirects to the Instructions page given the refno'''

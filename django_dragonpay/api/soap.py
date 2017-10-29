@@ -157,11 +157,9 @@ def get_txn_token(amount, description, email, txn_id=None, **params):
 
     # check if the response token is an error code
     if len(token) < 4:
-        logger.error(
-            '[%s] Dragonpay Error: %s',
-            token, DRAGONPAY_ERROR_CODES[token])
-
-        return
+        msg = '[%s] %s' % (token, DRAGONPAY_ERROR_CODES[token])
+        logger.error(msg)
+        raise DragonpayException(msg)
 
     logger.debug('[%s] token %s for %s PhP %s', txn_id, token, email, amount)
 
