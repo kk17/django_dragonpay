@@ -13,8 +13,8 @@ DRAGONPAY_TXN_LENGTH = getattr(settings, 'DRAGONPAY_TXN_LENGTH', 20)
 DRAGONPAY_SAVE_DATA = getattr(settings, 'DRAGONPAY_SAVE_DATA', False)
 
 if DRAGONPAY_TEST_MODE:
-    DRAGONPAY_BASE_URL = 'http://test.dragonpay.ph/'
-    DRAGONPAY_PAYOUT_BASE_URL = 'http://test.dragonpay.ph/'
+    DRAGONPAY_BASE_URL = 'https://test.dragonpay.ph/'
+    DRAGONPAY_PAYOUT_BASE_URL = 'https://test.dragonpay.ph/'
 else:
     DRAGONPAY_BASE_URL = 'https://gw.dragonpay.ph/'
     DRAGONPAY_PAYOUT_BASE_URL = 'https://live.dragonpay.ph/'
