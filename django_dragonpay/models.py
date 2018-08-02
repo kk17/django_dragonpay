@@ -151,11 +151,11 @@ class DragonpayPayout(models.Model):
     user_id = models.CharField(max_length=40, null=True, blank=True)
 
     # For non-registered, one time payout
-    user_name = models.CharField(max_length=32, null=True, blank=True)
+    user_name = models.CharField(max_length=64, null=True, blank=True)
     processor_id = models.CharField(
         max_length=8, null=True, blank=True, choices=PROCESSORS)
     processor_detail = models.CharField(max_length=32, null=True, blank=True)
-    email = models.CharField(max_length=32, null=True, blank=True)
+    email = models.CharField(max_length=254, null=True, blank=True)
     mobile = models.CharField(max_length=32, null=True, blank=True)
 
     # payout details

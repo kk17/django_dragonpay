@@ -104,7 +104,7 @@ ACCOUNT_NUMBER_LENGTHS = {
 }
 
 ACCOUNT_NUMBER_REGEX = {
-    'BDO': r'^(00)?\d{10}$', 'BPI': r'^\d{10}$', 'CBC': r'^\d{10}$',
+    'BDO': r'^(0?\d{11})|((00)?\d{10})$', 'BPI': r'^\d{10}$', 'CBC': r'^\d{10}$',
     'EWB': r'^\d{12}$', 'LBP': r'^\d{10}$', 'MBTC': r'^\d{13}$',
     'RCBC': r'^\d{10}$', 'SBC': r'^\d{13}$', 'UBP': r'^\d{12}$',
     'UCPB': r'^\d{12}$'

@@ -10,6 +10,7 @@ DRAGONPAY_ENCRYPT_PARAMS = getattr(settings, 'DRAGONPAY_ENCRYPT_PARAMS', False)
 
 # the transaction length, max 40
 DRAGONPAY_TXN_LENGTH = getattr(settings, 'DRAGONPAY_TXN_LENGTH', 20)
+DRAGONPAY_TXNID_PREFIX = getattr(settings, 'DRAGONPAY_TXNID_PREFIX', '')
 DRAGONPAY_SAVE_DATA = getattr(settings, 'DRAGONPAY_SAVE_DATA', False)
 
 if DRAGONPAY_TEST_MODE:

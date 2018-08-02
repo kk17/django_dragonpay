@@ -132,3 +132,4 @@ DragonPay API Notes
 
 1. The Merchant PASSWORD or KEY is the SECRET for all Payment Switch API transactions.
 2. The API KEY is used for Payouts.
+3. The Payment and Payout callback URLs are registered manually by dragonpay, we have to inform them on any changes on these urls.

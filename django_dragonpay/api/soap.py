@@ -354,10 +354,15 @@ def request_payout_ex(
     mobile - the mobile number of the individual.
     currency - the currency to be used, defaults to PHP when None.
 
-    Note: Payout transaction fees are not subtracted to the amount but
+    Note:
+      - Payout transaction fees are not subtracted to the amount but
         will be shouldered by the merchant. So if we send amount=500,
         with a processor whose fee is PhP 15, PhP 515 will be deducted
-        from our DragonPay account.'''
+        from our DragonPay account.
+      - Dragonpay will send a POST request to a registered endpoint url
+        to notify us of the status of a payout transaction. See
+        forms.DragonpayPayoutCallbackForm for the payload format.
+    '''
 
     txn_id = generate_txn_id()
     context = {

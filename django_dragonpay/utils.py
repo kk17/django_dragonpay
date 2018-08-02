@@ -65,5 +65,9 @@ def decrypt_data(message):
 def generate_txn_id():
     '''Generates a random transaction id.'''
 
-    return ''.join([random.choice(
-        string.hexdigits) for i in range(settings.DRAGONPAY_TXN_LENGTH)])
+    # Add the prefix, plus an underscore if prefix exists
+    # PREFIX_RANDOMTXNID
+    return '_'.join(filter(None, [
+        settings.DRAGONPAY_TXNID_PREFIX,
+        ''.join(random.sample(string.hexdigits, k=settings.DRAGONPAY_TXN_LENGTH))
+    ]))
