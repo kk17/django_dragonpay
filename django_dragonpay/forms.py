@@ -71,10 +71,11 @@ class DragonpayPayoutCallbackForm(forms.Form):
     def __init__(self, data):
         # convert all keys to lowercase
         data = {i[0].lower(): i[1] for i in data.items()}
-        logger.debug(data)
+        logger.debug('DragonpayPayload: %s', data)
         super(DragonpayPayoutCallbackForm, self).__init__(data)
 
     def clean(self):
+        super(DragonpayPayoutCallbackForm, self).clean()
         KEYS = ['merchanttxnid', 'refno', 'status', 'message']
 
         try:
@@ -83,13 +84,16 @@ class DragonpayPayoutCallbackForm(forms.Form):
             logger.error('%s not found in request', e)
             raise forms.ValidationError('%s not found in request' % e)
 
-        digest = get_dragonpay_digest(to_digest)
+        computed_digest = get_dragonpay_digest(to_digest)
 
         # Validate that the message sent is cryptographically valid
-        if self.cleaned_data['digest'] != digest:
+        form_digest = self.cleaned_data.get('digest')
+        if form_digest and form_digest != computed_digest:
+            # if digest exists, check if it is the same with our
+            # computed digest
             logger.error(
                 'Request hash [%s] doesnt match caclulated [%s]',
-                self.cleaned_data['digest'], digest)
+                form_digest, computed_digest)
 
             raise forms.ValidationError("DragonPay digest doesn't match!")
 
