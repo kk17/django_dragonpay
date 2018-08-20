@@ -95,6 +95,26 @@ def _dragonpay_get_wrapper(webmethod, xml_name=None, context={}, payout=False):
 
         return response
 
+def create_lifetime_user(name, email, remarks):
+    '''Creates a DragonPay Lifetime User Id'''
+
+    context = {'name': name, 'email': email, 'remarks': remarks, 'prefix': dp_settings.DRAGONPAY_PREFIX}
+    logger.debug('create_lifetime_user payload: %s', context)
+    lifetime_id = _dragonpay_get_wrapper('CreateLifetimeUser', context=context)
+
+    context['lifetime_user_id'] = lifetime_id
+    DragonpayLifetimeUser.create_from_dict(context)
+
+    # check if the response token is an error code
+    if len(lifetime_id) < 4:
+        msg = '[%s] %s' % (lifetime_id, DRAGONPAY_ERROR_CODES[lifetime_id])
+        logger.error(msg)
+        raise DragonpayException(msg)
+
+    logger.debug('lifetime_id %s for %s, %s, %s', lifetime_id, name, email, remarks)
+
+    return lifetime_id
+
 
 def get_txn_url_from_token(token, proc_id=None):
     '''Returns the DragonPay payment URL given a token.'''

@@ -2,7 +2,7 @@ import logging
 from django.db import models
 from django_dragonpay.settings import DRAGONPAY_SAVE_DATA
 
-__all__ = ['DragonpayPayoutUser', 'DragonpayTransaction', 'DragonpayPayout']
+__all__ = ['DragonpayPayoutUser', 'DragonpayTransaction', 'DragonpayPayout', 'DragonpayLifetimeUser']
 
 logger = logging.getLogger('dragonpay.models')
 
@@ -248,3 +248,25 @@ class DragonpayPayout(models.Model):
 
         else:
             raise Exception('Invalid details type %s', type(details))
+
+
+class DragonpayLifetimeUser(models.Model):
+    id = models.CharField(primary_key=True, max_length=40, verbose_name='LifetimeUser ID')
+    name = models.CharField(max_length=64, null=True, blank=True)
+    email = models.CharField(max_length=254, null=True, blank=True)
+    remarks = models.CharField(max_length=254, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)    # timestamp field
+    modified_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def create_from_dict(cls, details):
+        # Check if we should save to database
+        if not DRAGONPAY_SAVE_DATA:
+            return
+
+        return DragonpayLifetimeUser.objects.create(
+            id=details['lifetime_user_id'],
+            name=details['name'],
+            email=details['email'],
+            remarks=details['remarks'],
+        )

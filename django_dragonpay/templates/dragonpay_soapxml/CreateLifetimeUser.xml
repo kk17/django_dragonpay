@@ -1,0 +1,13 @@
+{% extends 'dragonpay_soapxml/base.xml' %}
+
+{% block body %}
+<tns:CreateLifetimeUser xmlns="http://api.dragonpay.ph/">
+    <tns:merchantId>{{ dp_merchant_id }}</tns:merchantId>
+    <tns:password>{{ dp_merchant_secret }}</tns:password>
+    <tns:prefix>{{ prefix }}</tns:prefix>
+    <tns:name>{{ name }}</tns:name>
+    <tns:email>{{ email }}</tns:email>
+    <tns:remarks>{{ remarks }}</tns:remarks>
+    <tns:email>{{ email }}</tns:email>
+</tns:CreateLifetimeUser>
+{% endblock%}
