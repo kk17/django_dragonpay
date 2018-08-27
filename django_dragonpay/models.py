@@ -58,6 +58,12 @@ class DragonpayTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def lifetime_user_id(self):
+        if '-' in self.id:
+            return self.id.split('-')[0]
+        return ''
+
     class Meta:
         app_label = 'django_dragonpay'
         verbose_name = "Transaction"

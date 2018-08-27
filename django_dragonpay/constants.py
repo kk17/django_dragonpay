@@ -45,7 +45,10 @@ DRAGONPAY_PAYOUT_ERROR_CODES = {
     '-6': 'Invalid pre-dated run date',
     '-7': 'Amount exceeds limit for payout channel',
     '-8': 'A payout has been previously requested for the same merchant txn id',
-    '-9': 'Source IP Address not whitelisted.'
+    '-9': 'Source IP Address not whitelisted',
+    '-10': 'Payout account is blacklisted',
+    '-11': 'Payout account is not enrolled for bank',
+    '-12': 'Invalid API Key',
 }
 
 

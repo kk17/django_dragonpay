@@ -4,6 +4,7 @@ from django.views import generic
 from django.conf import settings
 
 from django_dragonpay.forms import *
+from django_dragonpay.api import soap
 from django_dragonpay.models import DragonpayTransaction, DragonpayPayout
 
 logger = logging.getLogger('dragonpay.views')
@@ -59,9 +60,22 @@ class DragonpayCallbackBaseHandler(generic.View):
                 txn = DragonpayTransaction.objects.get(
                     id=self.form.cleaned_data['txnid'])
             except DragonpayTransaction.DoesNotExist as e:
-                if not self.allow_invalid_data:
+                txn_info = soap.get_txn(self.form.cleaned_data['refno'])
+                if txn_info:
+                    txn_data = {
+                        'txn_id': self.form.cleaned_data['txnid'],
+                        'amount': txn_info['amount'],
+                        'currency': txn_info['currency'],
+                        'description': txn_info['amount'],
+                        'email': txn_info['email'],
+                        'param1': txn_info['param1'],
+                        'param2': txn_info['param2'],
+                        'token': ''
+                    }
+                    txn = DragonpayTransaction.create_from_dict(txn_data)
+                elif not self.allow_invalid_data:
                     raise e
-            else:
+            if txn:
                 # update the status of the transaction
                 txn.status = self.form.cleaned_data['status']
 
@@ -72,6 +86,7 @@ class DragonpayCallbackBaseHandler(generic.View):
                 txn.save(update_fields=['status', 'refno'])
                 logger.debug(
                     'Transaction %s updated to %s', txn.id, txn.status)
+            self.txn = txn
         return super(
             DragonpayCallbackBaseHandler, self).dispatch(*args, **kwargs)
 
@@ -100,7 +115,7 @@ class DragonpayPayoutBaseHandler(generic.View):
                 txn.refno = self.form.cleaned_data['refno']
 
                 txn.save(update_fields=['status', 'refno'])
-
+                self.txn = txn
                 logger.debug('Payout %s updated to %s', txn.id, txn.status)
         return super(
             DragonpayPayoutBaseHandler, self).dispatch(

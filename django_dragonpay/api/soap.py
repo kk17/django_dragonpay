@@ -25,6 +25,11 @@ CONTEXT = {
     'dp_merchant_secret': dp_settings.DRAGONPAY_PASSWORD,
 }
 
+PAYOUT_CONTEXT = {
+    'dp_merchant_id': dp_settings.DRAGONPAY_ID,
+    'dp_merchant_apikey': dp_settings.DRAGONPAY_PAYOUT_API_KEY,
+    'dp_merchant_secret': dp_settings.DRAGONPAY_PASSWORD,
+}
 
 def _dragonpay_soap_wrapper(
         webmethod, context={}, xml_name=None, payout=False):
@@ -36,21 +41,21 @@ def _dragonpay_soap_wrapper(
         be used, if None, then webmethod.xml will be used.
     payout (boolean) - flag to use the DRAGONPAY_PAYOUT_URL.'''
 
-    # include the configuration constants
-    context.update(CONTEXT)
     context['web_method'] = webmethod
+
+    # check if this is a PAYOUT transaction
+    # include the configuration constants
+    if not payout:
+        context.update(CONTEXT)
+        url = dp_settings.DRAGONPAY_SOAP_URL
+    else:
+        context.update(PAYOUT_CONTEXT)
+        url = dp_settings.DRAGONPAY_PAYOUT_URL
 
     xml = render_to_string(
         'dragonpay_soapxml/%s.xml' % xml_name or webmethod, context)
-
     headers = {'SOAPAction': "http://api.dragonpay.ph/%s" % webmethod}
     headers.update(HEADERS)
-
-    # check if this is a PAYOUT transaction
-    if not payout:
-        url = dp_settings.DRAGONPAY_SOAP_URL
-    else:
-        url = dp_settings.DRAGONPAY_PAYOUT_URL
 
     logger.debug(
         'Sending SOAP Request to [%s]:\nHEADERS: %s\nXML:\n%s',
@@ -222,6 +227,14 @@ def get_txn_ref_no(txn_id):
     logger.debug('[%s] reference no: %s', txn_id, refno)
     return refno
 
+def get_txn(refno):
+    '''Fetches the transation info by a refno.'''
+
+    context = {'refno': refno}
+
+    txn_info = _dragonpay_get_wrapper('GetTxn', 'webmethod', context)
+    logger.debug('reference no: %s, trans', refno, txn_info)
+    return txn_info
 
 def get_available_processors(amount):
     context = {'web_method': 'GetAvailableProcessors', 'amount': amount}
