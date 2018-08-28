@@ -53,7 +53,7 @@ def _dragonpay_soap_wrapper(
         url = dp_settings.DRAGONPAY_PAYOUT_URL
 
     xml = render_to_string(
-        'dragonpay_soapxml/%s.xml' % xml_name or webmethod, context)
+        'dragonpay_soapxml/%s.xml' % (xml_name or webmethod), context)
     headers = {'SOAPAction': "http://api.dragonpay.ph/%s" % webmethod}
     headers.update(HEADERS)
 
@@ -140,7 +140,7 @@ def get_txn_token_url(amount, description, email, proc_id=None, **params):
         return get_txn_url_from_token(token[1], proc_id)
 
 
-def get_txn_token(amount, description, email, txn_id=None, **params):
+def get_txn_token(amount, description, email, ccy=None, txn_id=None, **params):
     '''Requests for a new DragonPay transaction and returns its txn_id and token.
     If not txn_id is passed, this method will generate one.
 
@@ -152,7 +152,7 @@ def get_txn_token(amount, description, email, txn_id=None, **params):
     txn_id = txn_id or generate_txn_id()
     context = {
         'txn_id': txn_id, 'amount': amount, 'email': email,
-        'description': description}
+        'description': description, 'ccy': ccy}
 
     logger.debug('params %s', params)
     # include the params in the context
@@ -240,9 +240,7 @@ def get_available_processors(amount):
     context = {'web_method': 'GetAvailableProcessors', 'amount': amount}
     context.update(CONTEXT)
 
-    return _dragonpay_get_wrapper(
-        'GetAvailableProcessors', 'GetAvailableProcessors',
-        context=context)
+    return _get_payment_data('GetAvailableProcessors', context=context)
 
 
 def get_email_instructions(refno):
@@ -258,6 +256,29 @@ def get_email_instructions(refno):
             'Error in getting email instructions: %s %s',
             response.status_code, response.content)
 
+# PAYOUT RELATED SOAP METHODS
+def _get_payment_data(webmethod, xml_name=None, context={}):
+    '''Helper function for fetching data related to Payout.'''
+
+    xmltree = _dragonpay_soap_wrapper(
+        webmethod, xml_name=xml_name, payout=False, context=context)
+
+    xmltree = xmltree.find(
+        './/{http://api.dragonpay.ph/}%(webmethod)sResponse/'
+        '{http://api.dragonpay.ph/}%(webmethod)sResult' % {
+            'webmethod': webmethod}
+    )
+    data = []
+
+    # convert the xmltree to dict
+    for result in xmltree:
+        subdata = {}
+        for detail in result:
+            subdata[detail.tag[detail.tag.index('}') + 1:]] = detail.text
+
+        data.append(subdata)
+
+    return data
 
 # PAYOUT RELATED SOAP METHODS
 def _get_payout_data(webmethod, xml_name=None):
