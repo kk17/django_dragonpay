@@ -217,6 +217,20 @@ def cancel_transaction(txn_id):
     else:
         logger.debug('[%s] Txn cancellation failed: %s', txn_id, status)
 
+def refund_transaction(ref_no, amount):
+    '''Refund the transaction given a transaction ref_no and amount. Returns True if the
+    refund succeeds.'''
+
+    context = {'ref_no': ref_no, 'amount': amount}
+    status = _dragonpay_get_wrapper('RefundTransaction', context=context)
+
+    if status == '0':
+        logger.debug('Txn refund success, ref_no: %s', ref_no)
+        return True
+
+    else:
+        logger.debug('Txn refund failed, ref_no: %s, status: %s', ref_no, status)
+
 
 def get_txn_ref_no(txn_id):
     '''Fetches the reference number of a transaction.'''
@@ -256,8 +270,29 @@ def get_email_instructions(refno):
             'Error in getting email instructions: %s %s',
             response.status_code, response.content)
 
+def _xmltree_to_dict(tree):
+    if tree.text:
+        return tree.text
+    if len(tree) == 0:
+        return None
+    d = {}
+    for c in tree:
+        tag = c.tag[c.tag.index('}') + 1:]
+        d[tag] = _xmltree_to_dict(c)
+    return d
+
+def _xmltree_to_data(xmltree, data_type):
+    if data_type == 'list':
+        data = []
+        for result in xmltree:
+            subdata = _xmltree_to_dict(result)
+            data.append(subdata)
+    elif data_type == 'object':
+        data = _xmltree_to_dict(xmltree)
+    return data
+
 # PAYOUT RELATED SOAP METHODS
-def _get_payment_data(webmethod, xml_name=None, context={}):
+def _get_payment_data(webmethod, xml_name=None, context={}, data_type='list'):
     '''Helper function for fetching data related to Payout.'''
 
     xmltree = _dragonpay_soap_wrapper(
@@ -268,41 +303,21 @@ def _get_payment_data(webmethod, xml_name=None, context={}):
         '{http://api.dragonpay.ph/}%(webmethod)sResult' % {
             'webmethod': webmethod}
     )
-    data = []
-
-    # convert the xmltree to dict
-    for result in xmltree:
-        subdata = {}
-        for detail in result:
-            subdata[detail.tag[detail.tag.index('}') + 1:]] = detail.text
-
-        data.append(subdata)
-
-    return data
+    return _xmltree_to_data(xmltree, data_type)
 
 # PAYOUT RELATED SOAP METHODS
-def _get_payout_data(webmethod, xml_name=None):
+def _get_payout_data(webmethod, xml_name=None, context={}, data_type='list'):
     '''Helper function for fetching data related to Payout.'''
 
     xmltree = _dragonpay_soap_wrapper(
-        webmethod, xml_name=xml_name or 'GetPayoutData', payout=True)
+        webmethod, xml_name=xml_name or 'GetPayoutData', payout=True, context=context)
 
     xmltree = xmltree.find(
         './/{http://api.dragonpay.ph/}%(webmethod)sResponse/'
         '{http://api.dragonpay.ph/}%(webmethod)sResult' % {
             'webmethod': webmethod}
     )
-    data = []
-
-    # convert the xmltree to dict
-    for result in xmltree:
-        subdata = {}
-        for detail in result:
-            subdata[detail.tag[detail.tag.index('}') + 1:]] = detail.text
-
-        data.append(subdata)
-
-    return data
+    return _xmltree_to_data(xmltree, data_type)
 
 
 def get_countries():
@@ -328,6 +343,34 @@ def get_payout_txn_status(txn_id):
         txn_id, DRAGONPAY_STATUS_CODES[txn_status])
 
     return txn_status
+
+def get_payout_txn_detail(txn_id):
+    '''Fetches the detail of a payout transaction.'''
+    context = {'txn_id': txn_id}
+
+    txn_detail = _get_payout_data(
+        'GetTxnDetails', xml_name='GetPayoutTxnDetails',
+        context=context, data_type='object')
+
+    logger.debug(
+        '[%s] txn status %s',
+        txn_id, txn_detail)
+
+    return txn_detail
+
+def get_ledger_balance():
+    '''Get Ledger Balance.'''
+    context = {}
+
+    balance = _dragonpay_get_wrapper(
+        'GetLedgerBalance', xml_name='GetLedgerBalance',
+        context=context, payout=True)
+
+    logger.debug(
+        'ledger balance: %s',
+        balance)
+
+    return balance
 
 
 def modify_payout_channel():
